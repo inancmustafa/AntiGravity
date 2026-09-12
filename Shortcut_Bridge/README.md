@@ -12,7 +12,7 @@ tarayıcı, Horizon veya ortam değiştiğinde yeniden doğrulanmalıdır.
 1. Host PC ve SM'de AutoHotkey v2 kurulu olmalı.
 2. Host'ta bu klasörü tut. `Bridge_Config.ahk` içindeki Waterfox yolu ve
    `SM_URL` ortamına uygun olmalı.
-3. SM'e **`Guest_SM_Receiver.ahk` ve `Bridge_Config.ahk` dosyalarını birlikte**
+3. SM'e **`Guest_SM_Receiver.ahk`, `Bridge_Config.ahk` ve `Bridge_Logger.ahk` dosyalarını birlikte**
    aynı klasöre kopyala; alıcıyı çalıştır.
 4. Host'ta `SM_Baslat.bat` dosyasını çalıştır. Köprü yeni bir Waterfox
    penceresi açar, o pencerenin HWND'sini tutar ve F11 ile tam ekrana geçer.
@@ -118,6 +118,7 @@ Horizon'un kendi gönderim düğmesini kullan.
 
 ```powershell
 python tests\test_bridge.py
+powershell -ExecutionPolicy Bypass -File tests\test_fullscreen_ui.ps1
 ```
 
 Python 3 ve AutoHotkey v2 gerekir. Farklı AHK yolu ikinci argümanla verilebilir.
@@ -136,22 +137,32 @@ kontrol edilir. Bu testler tarayıcı veya uzak masaüstü iletimini kanıtlamaz
 5. Özellikle F13–F17 ve **F24** için hem down hem up görüldüğünü doğrula.
 6. Host testinden Esc, SM göstergesinden Ctrl+Alt+Shift+X ile çık.
 
-### Gerçek Ctrl+Tab yolunun teşhisi
+### Gerçek Alt+Tab / Ctrl+Tab yolunun teşhisi
 
-1. SM'de alıcıyı kapat, `Test_ShowKeys.ahk` aç.
-2. Host'ta `Diag_CtrlTab.ahk` çalıştır. Bu, gerçek Host_PC_Bridge'i
-   teşhis modunda yeniden başlatır; ayrı bir F18 test yolu kullanmaz.
-3. SM penceresine tıkla ve Ctrl+Alt+Shift+M ile işaretle.
-4. Düz Tab, Ctrl+Tab, Ctrl+Shift+Tab dene.
-5. Düz Tab için F14 çıkmamalı. Ctrl+Tab'da F14 down/up yanında Ctrl;
-   ters yönde Ctrl+Shift bulunmalı.
-6. Host logu: `%TEMP%\shortcut_bridge.log`. Zamanlar milisaniyelik
-   yerel A_TickCount değerleridir; iki bilgisayar arasında doğrudan karşılaştırılmaz.
-7. Teşhis bitince host tray'den çık; SM alıcısını ve SM_Baslat.bat'ı aç.
+Ayrıntılı kısa deneme: [LOGGER_DENEME.md](LOGGER_DENEME.md).
 
-F14 ulaşıyor ama modifier görünmüyorsa iletim zincirini incele.
-F14 ve modifier birlikte ulaşıyor ama davranış yanlışsa alıcı sürümünü,
-yapılandırmayı ve hedef uygulamayı kontrol et.
+1. SM'e alıcı, config, Bridge_Logger ve Diag_SM_Receiver dosyalarını birlikte
+   kopyala; **Diag_SM_Receiver.ahk** çalıştır. Test_ShowKeys kapalı kalmalı.
+2. Host'ta **Diag_CtrlTab.ahk** çalıştır. Gerçek host köprüsü logger ile yeniden
+   başlar. SM'nin Waterfox penceresine tıkla ve **F8** ile işaretle.
+3. Düz Tab, sol Alt+Tab, Ctrl+Tab ve Ctrl+Shift+Tab dene.
+4. Her makinede `%TEMP%\ShortcutBridgeLogs` altında ayrı bir log oluşur:
+   host-*.log ve guest-*.log. Tray menüsündeki "Log klasorunu ac" da kullanılabilir.
+5. RAW satırları Windows olaylarını; HOST HANDLER/DOWN satırları köprü
+   işlemini; GUEST RX/TX satırları alım ve yerel gönderimi gösterir.
+   STATE satırındaki target=0 / matched=0 hedef pencere sorununun kanıtıdır.
+6. Teşhis bitince tray'den çık ve normal host/alıcıyı yeniden başlat.
+
+Logger harf/rakam veya pencere başlığı kaydetmez; yalnızca Tab, modifier,
+F8 ve F13–F24 olaylarını, pencere kimliğini ve süreç adını kaydeder. Windows
+observer hook'u olayları engellemez ve dosyaya yazmayı timer'a bırakır.
+Başka bir hook önce yutarsa RAW kaydı da eksik kalabilir; logda olay yokluğu
+tek başına Horizon'a ilişkin kesin bir teşhis değildir. `injected` bayrağı
+olayın fiziksel tuştan geldiğinin/gelmediğinin tek başına kanıtı değildir.
+
+Normal başlangıçta host scripti argümansız açılırsa target=0 ile pasiftir.
+**SM_Baslat.bat** hedef pencere açar; mevcut pencereyi teşhis modunda F8 ile
+bağlamak, pencere eşleşmesini modifier kısayollarından bağımsız sınar.
 
 ### Canlı oturum kabul kontrolü
 
@@ -186,3 +197,27 @@ kaynaklarını kullan.
 - Normal RESET doğal modifier'ları topluca bırakmıyor.
 - Yapılandırmada taşıyıcı çakışmaları ve geçersiz zamanlama kontrol ediliyor.
 - Profil user.js yedeği tekrar uygulamada korunuyor.
+
+## Waterfox üst kenar paneli
+
+Tam ekranda fare üst kenara geldiğinde araç çubuklarının açılmasını
+`fullscreen-ui.css` engeller. **F6** paneli gösterir, **Esc** gizler.
+F11 yine tam ekrandan çıkıp girmeyi sağlar. Klavyeyle adres çubuğuna
+odaklanma gibi yerleşik erişim yolları korunur; kapatılan şey fare tetikleyicisidir.
+
+Mevcut profilde yalnızca bu ayarı uygulamak için:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File Waterfox_SM\Apply_Waterfox_Prefs.ps1 -FullscreenOnly
+```
+
+Waterfox'u tamamen kapatıp yeniden açtıktan sonra geçerli olur.
+Kurulum `chrome/userChrome.css` ve `user.js` içine işaretli blok ekler;
+mevcut özelleştirmeleri korur. Tekrar çalıştırmak bloğu çoğaltmaz.
+`-FullscreenOnly -Remove` yalnızca bu blokları kaldırır.
+CSS dosyasını elle silme; diğer özelleştirmelerin aynı dosyada olabilir.
+
+Bu profilin tüm tam ekran Waterfox pencerelerine uygulanır. Fareyi üst
+kenara götürünce içerik alanı değişmemeli; F6/Esc ile açma-kapama bilerek
+istekte bulunduğunda gerçekleşir. Tarayıcı güncellemesi CSS seçicilerini
+veya kısayol davranışını değiştirirse yeniden kontrol edilmelidir.

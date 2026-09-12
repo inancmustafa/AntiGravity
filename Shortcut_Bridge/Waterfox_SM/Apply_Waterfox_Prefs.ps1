@@ -8,7 +8,7 @@
 #            powershell -ExecutionPolicy Bypass -File Apply_Waterfox_Prefs.ps1 -Remove
 # =============================================================================
 
-param([switch]$Remove)
+param([switch]$Remove, [switch]$FullscreenOnly)
 
 $ErrorActionPreference = 'Stop'
 
@@ -77,6 +77,11 @@ Write-Host "Aktif profil : $profileName"
 Write-Host "Dizin        : $profileDir"
 Write-Host ''
 
+if ($FullscreenOnly) {
+    & (Join-Path $PSScriptRoot 'Set_Fullscreen_UI.ps1') -ProfileDir $profileDir -Remove:$Remove
+    exit 0
+}
+
 $target = Join-Path $profileDir 'user.js'
 
 if ($Remove) {
@@ -95,6 +100,7 @@ if ($Remove) {
     } else {
         Write-Host 'user.js zaten yok.'
     }
+    & (Join-Path $PSScriptRoot 'Set_Fullscreen_UI.ps1') -ProfileDir $profileDir -Remove
     exit 0
 }
 
@@ -109,6 +115,7 @@ if (Test-Path $target) {
 
 Copy-Item $UserJsSource $target -Force
 Write-Host "user.js kopyalandi -> $target"
+& (Join-Path $PSScriptRoot 'Set_Fullscreen_UI.ps1') -ProfileDir $profileDir
 
 if (Get-Process -Name 'waterfox' -ErrorAction SilentlyContinue) {
     Write-Host ''

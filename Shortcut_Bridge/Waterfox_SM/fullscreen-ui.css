@@ -1,0 +1,8 @@
+/* Only fullscreen top-edge hover is disabled. F6 opens the toolbar; Esc hides it. */
+/* Explicit namespace wildcard also works in profiles with an XUL @namespace. */
+*|div#fullscr-toggler {
+    display: none !important;
+}
+*|*#navigator-toolbox[fullscreenShouldAnimate] {
+    transition: none !important;
+}

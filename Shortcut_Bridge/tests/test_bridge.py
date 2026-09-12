@@ -15,7 +15,7 @@ def run_ahk(args):
     result = subprocess.run([AHK, "/ErrorStdOut=UTF-8", *args],
                             capture_output=True, text=True, encoding="utf-8", timeout=20)
     if result.returncode:
-        raise AssertionError(result.stdout + result.stderr)
+        raise AssertionError(f"AHK exit={result.returncode}: " + result.stdout + result.stderr)
     return result.stdout
 
 for path in sorted(ROOT.glob("*.ahk")):
@@ -36,6 +36,7 @@ def handlers(filename, names):
 code = '#Requires AutoHotkey v2.0\n#SingleInstance Off\n#NoTrayIcon\n'
 code += '#Include ' + str(ROOT / "Bridge_Config.ahk") + '\n'
 code += r'''
+Trace := { enabled: false }
 T := { active: true, sent: [], physical: Map(), checks: 0 }
 St := { smHwnd: 1, held: Map(), sources: Map(), pendingReset: false,
         wasActive: false, lastKeepalive: 0 }
@@ -150,6 +151,11 @@ IsSM() {
 FakeKeyState(key, mode := "") {
     return T.physical.Has(key) && T.physical[key]
 }
+TraceWrite(*) {
+}
+TraceModifiers(*) {
+    return ""
+}
 Log(*) {
 }
 UpdateTray(*) {
@@ -180,4 +186,37 @@ registration += "\n" + handlers("Host_PC_Bridge.ahk", ["RegisterBridges"])
 with tempfile.TemporaryDirectory(prefix="shortcut-bridge-registration-") as folder:
     harness = Path(folder) / "registration.ahk"
     harness.write_text(registration, encoding="utf-8")
+    print(run_ahk([str(harness)]), end="")
+
+# Exercise the actual observer hook and buffered file writer without sending keys.
+logger_smoke = (
+    '#Requires AutoHotkey v2.0\n#SingleInstance Off\n#NoTrayIcon\n'
+    '#Include ' + str(ROOT / "Bridge_Config.ahk") + '\n'
+    '#Include ' + str(ROOT / "Bridge_Logger.ahk") + '\n'
+    + r'''
+try {
+    if (TraceKeyName(65) != "" || TraceKeyName(49) != "")
+        throw Error("Text keys must not be logged")
+    if (TraceKeyName(125) != "F14" || TraceKeyName(9) != "Tab")
+        throw Error("Key mapping failed")
+    TraceStart("TEST", true)
+    if !Trace.hook
+        throw Error("Observer hook installation failed")
+    TraceWrite("TEST_MARKER", "buffered-write")
+    Sleep 250
+    TraceStop()
+    contents := FileRead(Trace.path, "UTF-8")
+    if (!InStr(contents, "TEST_MARKER buffered-write") || !InStr(contents, "STOP"))
+        throw Error("Buffered log missing")
+    FileDelete Trace.path
+    FileAppend "PASS logger whitelist, native hook, buffer flush and cleanup" Chr(10), "*"
+    ExitApp 0
+} catch as err {
+    FileAppend "FAIL logger: " err.Message Chr(10), "*"
+    ExitApp 1
+}
+''')
+with tempfile.TemporaryDirectory(prefix="shortcut-bridge-logger-") as folder:
+    harness = Path(folder) / "logger.ahk"
+    harness.write_text(logger_smoke, encoding="utf-8")
     print(run_ahk([str(harness)]), end="")

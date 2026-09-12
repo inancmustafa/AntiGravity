@@ -1,6 +1,7 @@
 #Requires AutoHotkey v2.0
 #SingleInstance Force
 #Include Bridge_Config.ahk
+#Include Bridge_Logger.ahk
 
 ; ==============================================================================
 ; HOST PC - SM (SANAL MAKİNE) KÖPRÜ SCRIPTI
@@ -64,10 +65,20 @@ UpdateTray()
 SetTimer CheckSMWindow, 2000
 SetTimer MaintainBridge, 100
 OnExit(OnBridgeExit)
+TraceStart("HOST", DEBUG_LOG || St.diagnostic)
+Log("START target=" St.smHwnd " diagnostic=" St.diagnostic)
+if St.diagnostic {
+    HotIf (*) => St.diagnostic
+    Hotkey "F8", MarkActiveAsSM
+    HotIf
+    Notify("LOGGER AKTIF: SM penceresine tikla, F8 ile bagla.", 7000)
+}
 
 ; SM_Baslat.bat "sm" argümanıyla çağırır -> pencereyi hemen aç.
 if (A_Args.Length >= 1 && A_Args[1] = "sm")
     StartSM()
+else if !St.diagnostic
+    Notify("Kopru PASIF: SM_Baslat.bat kullan veya SM penceresini Ctrl+Alt+Shift+M ile bagla.", 7000)
 return
 
 ; ==============================================================================
@@ -176,6 +187,7 @@ RegisterBridges() {
 ; ==============================================================================
 HoldDown(e, hostKey, *) {
     Critical
+    Log("HANDLER_DOWN key=" hostKey " bridge=" e.bridge " ready=" BridgeReady())
     if !BridgeReady()
         return
     St.wasActive := true
@@ -194,6 +206,7 @@ HoldDown(e, hostKey, *) {
 
 HoldUp(e, hostKey, *) {
     Critical
+    Log("HANDLER_UP key=" hostKey " bridge=" e.bridge " tracked=" St.sources.Has(hostKey))
     if !St.sources.Has(hostKey)
         return
     St.sources.Delete(hostKey)
@@ -261,6 +274,18 @@ BridgeReady() {
 MaintainBridge() {
     Critical
     active := IsSM()
+    if Trace.enabled {
+        hwnd := WinExist("A")
+        exe := ""
+        try exe := WinGetProcessName("ahk_id " hwnd)
+        state := "target=" St.smHwnd " foreground=" hwnd " exe=" exe
+            . " matched=" active " pending=" St.pendingReset " suspended=" A_IsSuspended
+            . " held=" St.held.Count " " TraceModifiers()
+        if (state != Trace.lastState) {
+            Trace.lastState := state
+            TraceWrite("STATE", state)
+        }
+    }
     if (!active && St.wasActive && St.held.Count)
         SendReset()
     St.wasActive := active
@@ -306,9 +331,15 @@ MarkActiveAsSM(*) {
         Notify("Aktif pencere bulunamadı")
         return
     }
+    if (St.diagnostic && StrLower(WinGetProcessName("ahk_id " hwnd)) != "waterfox.exe") {
+        Log("MARK_REJECT foreground is not Waterfox")
+        Notify("Once SM'nin Waterfox penceresine tikla, sonra F8.", 4000)
+        return
+    }
     SendReset()
     St.smHwnd := hwnd
     St.pendingReset := true
+    Log("MARK target=" hwnd)
     UpdateTray()
     Notify("SM penceresi işaretlendi: " WinGetProcessName("A"))
 }
@@ -398,6 +429,8 @@ BuildTray() {
     tray.Add "Modifier'ları Bırak`t(Ctrl+Alt+Shift+R)", PanicRelease
     tray.Add "Duraklat / Devam`t(Ctrl+Alt+Shift+S)", ToggleSuspend
     tray.Add
+    tray.Add "Logger ile yeniden baslat", (*) => Run(Format('"{1}" "{2}" diag', A_AhkPath, A_ScriptFullPath))
+    tray.Add "Log klasorunu ac", TraceOpenFolder
     tray.Add "Yeniden Yükle", (*) => Reload()
     tray.Add "Çıkış", (*) => ExitApp()
     tray.Default := "SM'i Başlat"
@@ -430,16 +463,9 @@ Notify(msg, ms := 1500) {
 }
 
 Log(msg) {
-    if (!DEBUG_LOG && !St.diagnostic)
-        return
-    mods := ""
-    for key in ["Ctrl", "Shift", "Alt", "LWin", "RWin"]
-        if GetKeyState(key, "P")
-            mods .= key " "
-    line := A_TickCount " HOST " msg " physical=[" mods "]"
-    try FileAppend line "`n", A_Temp "\shortcut_bridge.log", "UTF-8"
-    if St.diagnostic
-        Notify(line, 3000)
+    if Trace.enabled
+        TraceWrite("BRIDGE", msg " target=" St.smHwnd " matched=" IsSM()
+            . " pending=" St.pendingReset " " TraceModifiers())
 }
 
 OnBridgeExit(*) {

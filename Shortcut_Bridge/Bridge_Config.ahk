@@ -143,7 +143,7 @@ HOST_KEY_DELAY  := 10     ; Host SendEvent tuş gecikmesi (ms). Horizon canvas'�
 GUEST_SETTLE_MS := 0      ; Guest: Alt down sonrası bekleme. Overlay açılmıyorsa
                           ; 10-30 arası dene.
 HOLD_TIMEOUT_MS := 8000   ; Guest watchdog: bu süre hareketsizlikte her şeyi bırak.
-DEBUG_LOG       := false  ; true -> %TEMP%\shortcut_bridge.log
+DEBUG_LOG       := false  ; true -> %TEMP%\ShortcutBridgeLogs (veya Diag_*.ahk kullan)
 
 ; Hatalı/çakışan protokol tanımlarını başlatmadan yakala.
 ValidateBridgeConfig()
