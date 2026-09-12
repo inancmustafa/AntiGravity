@@ -1,217 +1,188 @@
-# SM Kısayol Köprüsü (AHK v2)
+# SM Kısayol Köprüsü — AutoHotkey v2
 
-VMware Horizon HTML/Blast web client'ı üzerinden bağlanılan sanal makineye (**SM**), host işletim sisteminin yuttuğu sistem kısayollarını (Alt+Tab, Win) iletir.
+Waterfox içindeki Horizon HTML/Blast oturumunda yerel Windows veya tarayıcı
+tarafından işlenen kısayolları sanal makineye (SM) taşır.
 
-## Sorun
+Önceki test notlarına göre Ctrl, Shift ve Alt tek başına SM'e ulaşıyor;
+Alt+Tab ve Ctrl+Tab kombinasyonları ise yerelde işleniyordu. Bu gözlem
+tarayıcı, Horizon veya ortam değiştiğinde yeniden doğrulanmalıdır.
 
-Tarayıcı, işletim sistemi düzeyindeki kısayolları yakalayamaz. Horizon web client'ında Alt+Tab'a bastığında host PC pencere değiştirir, SM değil.
+## Kurulum ve kullanım
 
-Chromium tabanlı tarayıcılarda [Keyboard Lock API](https://developer.mozilla.org/en-US/docs/Web/API/Keyboard/lock) ile sayfa bu tuşları tam ekranda yakalayabilir. **Gecko (Firefox/Waterfox) bu API'yi desteklemez.** Dolayısıyla Waterfox kullanıldığında bu köprü opsiyonel bir kolaylık değil, **tek mekanizmadır**.
+1. Host PC ve SM'de AutoHotkey v2 kurulu olmalı.
+2. Host'ta bu klasörü tut. `Bridge_Config.ahk` içindeki Waterfox yolu ve
+   `SM_URL` ortamına uygun olmalı.
+3. SM'e **`Guest_SM_Receiver.ahk` ve `Bridge_Config.ahk` dosyalarını birlikte**
+   aynı klasöre kopyala; alıcıyı çalıştır.
+4. Host'ta `SM_Baslat.bat` dosyasını çalıştır. Köprü yeni bir Waterfox
+   penceresi açar, o pencerenin HWND'sini tutar ve F11 ile tam ekrana geçer.
+5. Horizon masaüstüne bağlan ve uzak masaüstü alanına tıkla.
+6. Her iki tray ipucunda **v4** görünmeli. Bu gösterge otomatik sürüm
+   uzlaşması değildir; iki tarafta aynı yapılandırma dosyası kullanılmalıdır.
 
-## Nasıl çalışır
+Köprü yalnızca işaretlenmiş Waterfox **penceresine** bağlıdır. Aynı pencerenin
+başka sekmesine, adres çubuğuna veya Horizon giriş ekranına geçildiğini
+algılamaz. Köprü aktifken bu alanlarda çalışmadan önce köprüyü duraklat.
 
+Elle açılmış bir pencereyi bağlamak için o pencereyi öne getir ve
+Ctrl+Alt+Shift+M kullan. Diğer Waterfox pencereleri köprülenmez.
+
+İsteğe bağlı profil ayarları:
+```powershell
+powershell -ExecutionPolicy Bypass -File Waterfox_SM\Apply_Waterfox_Prefs.ps1
 ```
-  HOST PC                                             SM (sanal makine)
-  ───────────────────────────────────                 ──────────────────────────
-  Sol Alt basılı tutulur
-      │
-      ├─ Host_PC_Bridge.ahk tuşu YUTAR
-      │  ve yerine F13 down enjekte eder
-      │                                    Horizon
-      └─ SendEvent {F13 down}  ──────────  protokolü  ──────►  Guest_SM_Receiver.ahk
-                                                                    │
-  Tab'a basılır                                                     └─ Send {Alt down}
-      └─ SendEvent {F14 down/up} ─────────────────────────────►  Send {Tab down/up}
-                                                                    │
-  Alt bırakılır                                                     │  Windows'un kendi
-      └─ SendEvent {F13 up}  ─────────────────────────────────►  Send {Alt up}
-                                                                       Alt+Tab overlay'i
+Bu işlem mevcut profile anasayfa/Alt menüsü/tam ekran tercihlerini yazar;
+köprünün çalışması için zorunlu değildir. Mevcut user.js ilk uygulamada
+user.js.bak olarak korunur; sonraki uygulama bu yedeği ezmez.
+`-Remove` mevcut yedeği geri yükler, yedek yoksa köprü user.js dosyasını
+kaldırır. Daha önce prefs.js'e işlenmiş değerler otomatik geri alınmaz.
+Birden fazla Waterfox kurulumu/profili varsa yazdırılan hedef dizini kontrol et;
+script profiles.ini içindeki ilk Install kaydını veya varsayılan profili seçer.
+
+## Tuşların izlediği yol
+
+```text
+Fiziksel klavye
+  -> Host_PC_Bridge.ahk
+  -> F13/F14/F15/F16 basma-bırakma olayları
+  -> Waterfox -> Horizon -> SM
+  -> Guest_SM_Receiver.ahk
+  -> gerçek Alt/Tab/Shift/Win basma-bırakma olayları
 ```
 
-F13–F24 tuşları seçilmesinin nedeni: fiziksel klavyelerde bulunmazlar, hiçbir uygulama onları kullanmaz, ama uzak masaüstü protokolünden geçebilirler.
-
-**Basılı tutma modeli:** Alt+Tab bir durum makinesidir — overlay Alt basılı kaldıkça açık kalır, Tab'a art arda basılabilir, Alt bırakılınca seçim onaylanır. Bu yüzden Alt/Tab/Shift/Win'in down ve up olayları ayrı ayrı köprülenir.
-
-## Dosyalar
-
-| Dosya | Nerede çalışır | Açıklama |
+| Host girdisi | Taşıyıcı | SM'deki karşılığı |
 |---|---|---|
-| `Bridge_Config.ahk` | **her iki taraf** | Tek gerçek kaynak: köprü tablosu, pencere kuralı, zamanlama |
-| `Host_PC_Bridge.ahk` | host PC | Tuşları yakalar, yutar, köprü tuşlarını enjekte eder |
-| `Guest_SM_Receiver.ahk` | SM içinde | Köprü tuşlarını gerçek kısayollara çevirir |
-| `Test_BridgeKeys.ahk` | host PC | Test 1: F13–F24'ü tek tek gönderir |
-| `Test_ShowKeys.ahk` | SM içinde | Test 1: SM'e ulaşan tuşları listeler |
-| `Waterfox_SM/Setup_SM_Profile.ps1` | host PC | SM profilini oluşturur, `user.js`'i yerleştirir |
-| `Waterfox_SM/user.js` | → SM profili | Ayrılmış profil için Gecko tercihleri |
-| `Waterfox_SM/Start_SM.cmd` | host PC | SM'i kiosk modunda açar |
+| Sol Alt | F13 down/up | Alt down/up |
+| Alt veya Ctrl ile Tab | F14 down/up | Tab down/up |
+| Alt köprülenirken sol/sağ Shift | F15 down/up | Shift down/up |
+| Sol/sağ Win | F16 down/up | LWin down/up |
+| Sıfırlama | F17 | Köprünün tuttuğu tuşları bırakır |
+| Canlılık sinyali | F24 | Alıcının zaman aşımını yeniler |
 
-> `Bridge_Config.ahk` her iki tarafta da gerekir. SM'e `Guest_SM_Receiver.ahk` ile **birlikte, aynı klasöre** kopyala. Eskiden köprü tuşları iki dosyada elle senkron tutulmak zorundaydı; artık tek yerde.
+Ctrl doğrudan iletilir. Ctrl+Tab ve Ctrl+Shift+Tab için yalnızca Tab köprülenir.
+Shift, Alt köprüsü aktif değilken doğrudan iletilir.
+Sağ Alt/AltGr köprülenmez; Türkçe klavye karakterleri korunmalıdır.
+Alt+Tab için sol Alt kullan.
 
----
+Host ve guest gönderimleri `{Blind}` kullanır: doğal olarak iletilen
+Ctrl/Shift'in gönderim sırasında otomatik bırakılmasını önler.
+Sol/sağ Win veya Shift birlikte tutulduğunda köprü son kaynak tuş
+bırakılana kadar açık kalır. Basılı tuşun otomatik tekrarları bastırılır;
+tekrar seçim için Tab'a yeniden basıp bırakılır.
 
-## Kurulum
+Alt+Tab seçicisi Alt tutuldukça açık kalmalı, Alt bırakılınca seçim
+onaylanmalıdır. Win+D/E/R gibi kombinasyonlarda harf normal kanaldan geçer.
 
-### 1. Host PC
+## Odak kaybı ve takılı tuşlar
 
-AutoHotkey v2 kurulu olmalı ([autohotkey.com](https://www.autohotkey.com/)).
+- Host, odağın ayrıldığını 100 ms aralıkla kontrol eder; tutulmuş köprü
+  durumunu temizler ve RESET'i dönüşe erteler. Odak dışına taşıyıcı göndermez.
+- RESET beklerken yeni köprü down olayları kabul edilmez. Dönüşte F17
+  gönderildikten sonra köprü yeniden hazırdır.
+- Host, tuş tutulduğu sürece saniyede bir F24 yollar. Böylece uzun Alt
+  tutuşları, bağlantı sağlıklıyken 8 saniye sonunda kesilmez.
+- Fiziksel olarak bırakılmış ama up olayı kaçmış kaynaklar host'ta uzlaştırılır.
+- Alıcı 8 saniye boyunca köprü olayı/canlılık sinyali almazsa tuttuğu
+  tuşları bırakır (watchdog kontrol aralığı 1 saniyedir).
+- Normal RESET ve watchdog yalnızca köprünün izlediği tuşları bırakır.
+  Doğal Ctrl/AltGr'yi zorla bırakmak için **SM içindeki** yerel panik veya
+  alıcı tray menüsü kullanılır.
+
+Odak değiştirdikten veya bağlantı koptuktan sonra kombinasyon tuşlarını
+bırakıp yeniden bas. Bu protokol bağlantı onayı veya kayıp paket yeniden
+iletimi içermez; F24 yalnızca canlılık sinyalidir. Tarayıcı/Horizon olay
+kaybı ya da uzak oturum odağı sorunları uçtan uca ölçülmelidir.
+
+## Kontrol kısayolları
+
+| Tuş | Host işlemi |
+|---|---|
+| Ctrl+Alt+Shift+S | Duraklat/devam et |
+| Ctrl+Alt+Shift+R | RESET gönder; SM odakta değilse dönüşe ertele |
+| Ctrl+Alt+Shift+M | Aktif pencereyi SM penceresi olarak işaretle |
+| Ctrl+Alt+Shift+Q | Köprü penceresini kapat |
+
+Host ve guest tray menülerinde çıkış ve yeniden yükleme seçenekleri bulunur.
+SM içinde Ctrl+Alt+Shift+R, doğal modifier'lar dahil acil bırakma yapar.
+Host bu kombinasyonu yakalıyorsa SM'deki alıcının tray menüsünü kullan.
+
+Köprü aktifken Alt+F4 SM'deki uygulamaya yönlenebilir.
+Pencere kapatma komutu 3 saniyede kapanmayan pencereye WinKill uygular.
+
+Win+L ve Ctrl+Alt+Del bu köprüyle desteklenmez. Ctrl+Alt+Del için
+Horizon'un kendi gönderim düğmesini kullan.
+
+## Testler
+
+### Otomatik kontroller (host)
 
 ```powershell
-# SM'e ayrılmış Waterfox profilini oluştur ve user.js'i yerleştir
-powershell -ExecutionPolicy Bypass -File Waterfox_SM\Setup_SM_Profile.ps1
+python tests\test_bridge.py
 ```
 
-Sonra `Host_PC_Bridge.ahk`'ye çift tıkla. Otomatik başlatmak için kısayolunu `shell:startup` klasörüne koy.
+Python 3 ve AutoHotkey v2 gerekir. Farklı AHK yolu ikinci argümanla verilebilir.
+Tüm AHK dosyaları /validate ile yükleme kontrolünden geçer. Regresyon testi
+gerçek host/guest işleyici gövdelerini çıkarıp sahte giriş/çıkışla çalıştırır;
+klavye olayı enjekte etmez veya Horizon açmaz. Modifier koruması, tekrar
+bastırma, ortak sol/sağ kaynaklar, odak dışı RESET, canlılık ve watchdog
+kontrol edilir. Bu testler tarayıcı veya uzak masaüstü iletimini kanıtlamaz.
 
-### 2. SM (sanal makine)
+### Taşıyıcı iletimi
 
-SM'in içine AutoHotkey v2 kur, sonra şu **iki** dosyayı aynı klasöre kopyala:
+1. Host köprüsünü ve guest alıcısını kapat.
+2. SM'de `Test_ShowKeys.ahk`, host'ta `Test_BridgeKeys.ahk` çalıştır.
+3. Uzak masaüstü alanına tıkla.
+4. Host'taki 1–9, 0, q, w tuşları F13–F24 gönderir; F1 hepsini tarar.
+5. Özellikle F13–F17 ve **F24** için hem down hem up görüldüğünü doğrula.
+6. Host testinden Esc, SM göstergesinden Ctrl+Alt+Shift+X ile çık.
 
-- `Guest_SM_Receiver.ahk`
-- `Bridge_Config.ahk`
+### Gerçek Ctrl+Tab yolunun teşhisi
 
-`Guest_SM_Receiver.ahk`'ye çift tıkla. Otomatik başlatmak için SM içinde `shell:startup` kullan.
+1. SM'de alıcıyı kapat, `Test_ShowKeys.ahk` aç.
+2. Host'ta `Diag_CtrlTab.ahk` çalıştır. Bu, gerçek Host_PC_Bridge'i
+   teşhis modunda yeniden başlatır; ayrı bir F18 test yolu kullanmaz.
+3. SM penceresine tıkla ve Ctrl+Alt+Shift+M ile işaretle.
+4. Düz Tab, Ctrl+Tab, Ctrl+Shift+Tab dene.
+5. Düz Tab için F14 çıkmamalı. Ctrl+Tab'da F14 down/up yanında Ctrl;
+   ters yönde Ctrl+Shift bulunmalı.
+6. Host logu: `%TEMP%\shortcut_bridge.log`. Zamanlar milisaniyelik
+   yerel A_TickCount değerleridir; iki bilgisayar arasında doğrudan karşılaştırılmaz.
+7. Teşhis bitince host tray'den çık; SM alıcısını ve SM_Baslat.bat'ı aç.
 
-> Dosyaları SM'e taşımak için Horizon'un sürücü eşleme özelliğini kullanabilir veya SM içinden indirebilirsin. Kurumsal politika SM'de AHK'yı engelliyorsa IT ile görüş.
+F14 ulaşıyor ama modifier görünmüyorsa iletim zincirini incele.
+F14 ve modifier birlikte ulaşıyor ama davranış yanlışsa alıcı sürümünü,
+yapılandırmayı ve hedef uygulamayı kontrol et.
 
-### 3. SM penceresini aç
+### Canlı oturum kabul kontrolü
 
-`Waterfox_SM\Start_SM.cmd` — veya host script'inin tray menüsünden **"SM'i Başlat"**.
+- Alt+Tab: art arda seçim, Alt+Shift+Tab ile geri seçim ve Alt bırakınca onay.
+- Ctrl+Tab / Ctrl+Shift+Tab; ardından Ctrl+C/V ve normal Tab/Shift+Tab.
+- Shift ile büyük harf ve AltGr ile @, [, ], {, }.
+- Win+D/E/R; sol/sağ Win ve Shift'in birlikte basılı tutulması.
+- Alt'ı 15 saniye tut: bağlantı sağlıklıyken seçici erken kapanmamalı.
+- Alt basılıyken fareyle başka host penceresine geç, tuşları bırak ve geri dön:
+  SM'de takılı tuş kalmamalı.
+- Host durdurulduğunda guest tuttuğu tuşları zaman aşımı sonunda bırakmalı.
+- Normal Waterfox penceresinde yerel kısayollar çalışmaya devam etmeli.
 
-Açılan komut satırı:
+## Yeni kısayol ve dağıtım
 
-```
-waterfox.exe -P "SM" --no-remote --kiosk "https://vgpu-secure.fnss.com.tr/portal/webclient/#/desktop"
-```
+Önce kısayolun gerçekten tarayıcıda kaldığını ölç. Ardından
+Bridge_Config içindeki uygun tap satırını aç. Guest alanı temel tuş adıdır
+(ör. w); Ctrl gibi doğal modifier'ı tekrar ekleme.
+F17 RESET, F24 canlılık için ayrılmıştır. F18–F23 ek kısayollara ayrılabilir.
+F14 için ayrıca ^Tab hotkey'i ekleme; ortak Tab kapısı kullanılır.
 
-`--kiosk` sekme ve adres çubuğunu kaldırır, tarayıcı UI kısayollarının çoğunu devre dışı bırakır.
+Değişiklikleri her iki tarafa aynı config ile dağıt ve scriptleri yeniden başlat.
+Eski Shortcut_Bridge.7z arşivi bu sürümün dağıtımı değildir; güncel Git
+kaynaklarını kullan.
 
-> ⚠ **Kiosk + köprü = Alt+F4 artık Waterfox'u kapatmaz** (Alt SM'e gidiyor). Çıkış için **Ctrl+Alt+Shift+Q**. Kiosk moduna güvenmeden önce bu tuşun çalıştığını doğrula.
+## v4 düzeltmeleri
 
----
-
-## Ölçüm — kuruluma başlamadan yapılması gerekenler
-
-Bu iki test tahmin yerine ölçüm koyar. Sonuçları `Bridge_Config.ahk`'yi nasıl dolduracağını belirler.
-
-### Test 1 — hangi köprü tuşları SM'e ulaşıyor?
-
-Bazı uzak masaüstü protokolleri F13 ve üstünü iletmez.
-
-1. SM içinde `Guest_SM_Receiver.ahk`'yi **kapat**, `Test_ShowKeys.ahk`'yi çalıştır.
-2. Host'ta `Test_BridgeKeys.ahk`'yi çalıştır. Ekranda tetikleyici tuş listesi çıkar.
-3. SM penceresine tıkla, sonra `1`–`9`, `0`, `-`, `=` tuşlarına tek tek bas (veya `F1` ile hepsini tara).
-4. SM'deki listede **görünen** tuşları not et.
-5. `BRIDGE_TABLE`'da yalnızca ulaşan tuşları kullan. `Esc` ile test scriptini kapat.
-
-### Test 2 — Waterfox hangi kısayolları çalıyor?
-
-Gecko bazı kendi kısayollarını sayfanın `preventDefault`'una bırakmaz; o tuşlar SM'e hiç ulaşmaz. Ama `--kiosk` bunların bir kısmını zaten çözüyor olabilir — bu yüzden **ölçmeden köprülemiyoruz**.
-
-SM oturumu açıkken (alıcı çalışıyor, kiosk modunda) şunları tek tek dene ve hangisinin **Waterfox'a** etki ettiğini, hangisinin **SM'e** ulaştığını not et:
-
-`Ctrl+W` · `Ctrl+T` · `Ctrl+N` · `Ctrl+Shift+W` · `Ctrl+S` · `Ctrl+P` · `Ctrl+F` · `Ctrl+L` · `F11` · `Alt+Sol` · `Backspace`
-
-SM'e ulaşmayan her biri için `Bridge_Config.ahk`'de ilgili satırın yorumunu kaldır. **Hepsini birden açma** — gereksiz köprü, tarayıcıdan geçmesi gereken bir tuşu da yutar.
-
-> **Ctrl bilinçli olarak köprülenmiyor.** Ctrl'ün tamamını köprülemek her Ctrl çakışmasını tek hamlede çözerdi, ama Horizon'un tarayıcı seviyesindeki pano (Ctrl+C / Ctrl+V) senkronizasyonunu bozma riski var. Bu yüzden yalnızca ölçümle kanıtlanan tek tek kombinasyonlar köprülenir.
-
----
-
-## Desteklenen kısayollar
-
-| Host'ta bastığın | Köprü tuşu | SM'de olan |
-|---|---|---|
-| **Sol Alt** (basılı tut) | F13 down/up | Alt basılı tutulur → overlay açılır, bırakılınca onaylanır |
-| **Tab** (Alt basılıyken) | F14 down/up | Tab → seçim ilerler |
-| **Shift** (Alt basılıyken) | F15 down/up | Shift → seçim geri gider (Alt+Shift+Tab) |
-| **Win** (sol veya sağ) | F16 down/up | Win basılı tutulur → Başlat menüsü, **ve Win+D / Win+E gibi kombinasyonlar** |
-| — | F17 | RESET: SM'deki tüm modifier'ları bırak |
-
-Win tuşu `down/up` olarak köprülendiği için Win+D, Win+E, Win+R gibi kombinasyonlar çalışır: harf tuşu tarayıcıdan normal şekilde geçip SM'e ulaşır ve orada basılı tutulan Win ile birleşir.
-
-## Operasyon hotkey'leri
-
-| Hotkey | Nerede | İşlev |
-|---|---|---|
-| `Ctrl+Alt+Shift+S` | host | Köprüyü duraklat / devam ettir |
-| `Ctrl+Alt+Shift+R` | host | Panik: SM'deki tüm modifier'ları bırak |
-| `Ctrl+Alt+Shift+Q` | host | SM penceresini kapat (kiosk modunda tek çıkış) |
-| `Ctrl+Alt+Shift+R` | **SM içinde** | Yerel panik: SM'de takılı modifier'ları bırak |
-
-Her iki tarafta tray ikonunun üzerine gelince o anki durum (basılı köprü tuşları, duraklatıldı mı) görünür.
-
----
-
-## Köprülenmeyenler — bunları "düzeltmeyin"
-
-Bunlar eksik değil, bilinçli kararlar:
-
-### RAlt / AltGr — Alt+Tab yalnızca SOL Alt ile çalışır
-
-Host scripti yalnızca `LAlt`'ı yakalar. Türkçe-Q klavyede AltGr (= sağ Alt) `@ [ ] { }` karakterleri için zorunludur. AltGr köprülenirse Waterfox'a ve SM'e hiç ulaşmaz ve bu karakterler **yazılamaz hale gelir**.
-
-Yani: Alt+Tab için sol Alt'ı kullan. Bu, ödenmesi gereken doğru bedel.
-
-### Win+L
-
-Windows'un sistem düzeyinde ayırdığı bir kısayoldur; AHK onu engelleyemez. Basarsan **host PC kilitlenir**, SM değil. SM'i kilitlemek için Başlat menüsünü (Win) kullan.
-
-### Ctrl+Alt+Del
-
-Windows, Secure Attention Sequence'i enjekte edilen girdiye kapatır — hiçbir script bunu tetikleyemez. **Horizon araç çubuğundaki Ctrl+Alt+Del düğmesini** kullan.
-
----
-
-## Yeni bir kısayol köprülemek
-
-`Bridge_Config.ahk` içindeki `BRIDGE_TABLE`'a **tek satır** ekle:
-
-```ahk
-{ bridge: "F19", host: ["^t"], guest: "^t", mode: "tap", needsAlt: false },
-```
-
-| Alan | Anlamı |
-|---|---|
-| `bridge` | Kullanılacak köprü tuşu. **Test 1 ile SM'e ulaştığını doğrula.** |
-| `host` | Host'ta yakalanıp yutulacak tuş(lar). Dizi — `["LWin", "RWin"]` gibi çoklu olabilir. |
-| `guest` | SM'de üretilecek şey. `mode: "hold"` ise tuş adı (`"Alt"`), `"tap"` ise Send dizisi (`"^t"`). |
-| `mode` | `"hold"` → down/up aynalanır (durum makineleri). `"tap"` → tek vuruş. |
-| `needsAlt` | `true` → host'ta yalnızca Alt köprüsü basılıyken yakalanır. |
-
-Değişiklikten sonra **her iki tarafta** scriptleri yeniden başlat (tray → Yeniden Yükle) ve `Bridge_Config.ahk`'nin güncel kopyasını SM'e tekrar kopyala.
-
----
-
-## Sorun giderme
-
-| Belirti | Bakılacak yer |
-|---|---|
-| Alt+Tab hiç çalışmıyor | **Test 1**: F13/F14 SM'e ulaşıyor mu? Ulaşmıyorsa `BRIDGE_TABLE`'da ulaşan tuşlara geç. |
-| Sağ Alt ile Alt+Tab çalışmıyor | Beklenen davranış — sol Alt kullan (yukarıdaki AltGr bölümü). |
-| SM'de Alt takılı kaldı | `Ctrl+Alt+Shift+R` (host veya SM). Watchdog zaten `HOLD_TIMEOUT_MS` (8 sn) sonra kendi bırakır. |
-| Alt+Tab bir pencere atlıyor | Ağ jitter'ı: F14, F13'ten önce ulaşmış. `Bridge_Config.ahk`'de `DEBUG_LOG := true` yapıp `%TEMP%\shortcut_bridge.log`'a bak. |
-| Overlay açılmıyor, pencere direkt değişiyor | `GUEST_SETTLE_MS`'i 10–30 arası bir değere çıkar. |
-| Köprü hiç tetiklenmiyor | SM penceresi `ahk_exe waterfox.exe` ile eşleşiyor mu? AHK Window Spy ile kontrol et. |
-| Günlük tarayıcımda Alt+Tab bozuldu | O tarayıcı `SM_WINDOW` kuralına giriyor demektir. Kural yalnızca Waterfox'u kapsamalı. |
-| Ctrl+W SM'e ulaşmıyor | **Test 2** → `BRIDGE_TABLE`'daki `^w` satırını aç. |
-| Kiosk penceresi kapanmıyor | `Ctrl+Alt+Shift+Q`. Çalışmıyorsa Görev Yöneticisi'nden `waterfox.exe`. |
-| Horizon client'ta garip görüntü/ölçek sorunu | SM profilinde `privacy.resistFingerprinting` — `user.js` bunu `false` yapar, uygulandığını doğrula. |
-
-### Teşhis
-
-```powershell
-# Sözdizimi kontrolü (çalıştırmadan)
-& 'C:\Program Files\AutoHotkey\v2\AutoHotkey64.exe' /validate /ErrorStdOut Host_PC_Bridge.ahk
-```
-
-Ayrıntılı iz için `Bridge_Config.ahk`'de `DEBUG_LOG := true` → `%TEMP%\shortcut_bridge.log` (her iki taraf da aynı dosya adını kullanır, kendi makinesinde).
-
----
-
-## Geliştirici notları
-
-- **Dosyalar BOM'suz UTF-8 olarak kaydedilmelidir.** AHK v2 script dosyalarını varsayılan olarak UTF-8 okur. Başa BOM eklenirse ilk satırdaki anahtar sözcüğe BOM karakteri yapışır ve AHK onu bambaşka bir tanımlayıcı olarak ayrıştırır — hata mesajı da bunu göstermez, saatler kaybettirir.
-- **`global` anahtar sözcüğü kullanılmaz.** Tüm değişken durum tek bir nesnede (`St` host'ta, `G` guest'te) tutulur. Nesne *özelliğine* atama yapmak `global` bildirimi gerektirmediği için fonksiyonların içinde tek bir `global` satırı yok — super-global kapsam belirsizliği tamamen ortadan kalkıyor.
-- **`up` olayları geçirmeli (`~`) ve bağlamsız kaydedilir.** Odak SM penceresinden çıksa bile yakalanmaları gerekir, ama Alt-up'ı global olarak yutmak host'ta Alt'ı bozar. Köprüleme sırasında Alt-down zaten yutulduğu için OS'in eşleşmeyen bir Alt-up görmesi zararsızdır.
-- **Odak kaybında köprü tuşu gönderilmez.** `SendEvent` o an odakta olan pencereye gider; odak SM'den çıkmışken göndermek hem alakasız bir uygulamaya kaçak tuş enjekte eder hem SM'de modifier'ı takılı bırakır. Onun yerine `pendingReset` işaretlenir ve odak döndüğünde RESET gönderilir.
-- **Tab/Shift bağlamı fiziksel tuş durumuna değil köprü durumuna bakar** (`St.held.Has(ALT_BRIDGE)`). Böylece host'un fiziksel durumu ile guest'in inandığı durum ayrışamaz.
+- Gerçek hold down/up gönderimlerine Blind eklendi.
+- Teşhis scripti gerçek köprü yoluna bağlandı; eski F18 açıklamaları kaldırıldı.
+- F24 canlılık sinyali ve odak dönüşünde ertelenmiş RESET eklendi.
+- Sol/sağ kaynaklar ayrı izleniyor; köprülenen up olayları SM odağında yutuluyor.
+- Normal RESET doğal modifier'ları topluca bırakmıyor.
+- Yapılandırmada taşıyıcı çakışmaları ve geçersiz zamanlama kontrol ediliyor.
+- Profil user.js yedeği tekrar uygulamada korunuyor.

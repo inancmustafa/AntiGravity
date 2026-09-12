@@ -1,0 +1,183 @@
+"""Regression checks execute actual AHK handler bodies with fake input/output.
+No keyboard events are injected, no browser is opened, no bridge is started.
+Run: python tests/test_bridge.py [path-to-AutoHotkey64.exe]
+"""
+from pathlib import Path
+import re
+import subprocess
+import sys
+import tempfile
+
+ROOT = Path(__file__).resolve().parents[1]
+AHK = sys.argv[1] if len(sys.argv) > 1 else r"C:\Program Files\AutoHotkey\v2\AutoHotkey64.exe"
+
+def run_ahk(args):
+    result = subprocess.run([AHK, "/ErrorStdOut=UTF-8", *args],
+                            capture_output=True, text=True, encoding="utf-8", timeout=20)
+    if result.returncode:
+        raise AssertionError(result.stdout + result.stderr)
+    return result.stdout
+
+for path in sorted(ROOT.glob("*.ahk")):
+    run_ahk(["/validate", str(path)])
+    print("PASS syntax:", path.name)
+
+def handlers(filename, names):
+    source = (ROOT / filename).read_text(encoding="utf-8")
+    bodies = []
+    for name in names:
+        match = re.search(r"^" + name + r"\([^\n]*\) \{.*?^\}", source, re.M | re.S)
+        assert match, name
+        body = re.sub(r"\bSendEvent\b|\bSend\b", "Capture", match[0])
+        body = body.replace("GetKeyState(", "FakeKeyState(")
+        bodies.append(body)
+    return "\n".join(bodies)
+
+code = '#Requires AutoHotkey v2.0\n#SingleInstance Off\n#NoTrayIcon\n'
+code += '#Include ' + str(ROOT / "Bridge_Config.ahk") + '\n'
+code += r'''
+T := { active: true, sent: [], physical: Map(), checks: 0 }
+St := { smHwnd: 1, held: Map(), sources: Map(), pendingReset: false,
+        wasActive: false, lastKeepalive: 0 }
+G := { held: Map(), lastActivity: A_TickCount }
+
+try {
+    rejected := false
+    BRIDGE_TABLE.Push({bridge: BRIDGE_KEEPALIVE, host: ["x"], guest: "x", mode: "tap", gate: ""})
+    try ValidateBridgeConfig()
+    catch
+        rejected := true
+    BRIDGE_TABLE.Pop()
+    Check(rejected, "reserved heartbeat collision rejected")
+    tabEntry := BRIDGE_TABLE[2]
+    winEntry := BRIDGE_TABLE[4]
+    altEntry := BRIDGE_TABLE[1]
+    T.physical["Ctrl"] := true
+    T.physical["Tab"] := true
+    HoldDown(tabEntry, "Tab")
+    Check(T.sent.Length = 1 && T.sent[1] = "{Blind}{F14 down}", "Ctrl+Tab retains modifiers")
+    HoldDown(tabEntry, "Tab")
+    Check(T.sent.Length = 1, "repeat down is suppressed")
+    HoldUp(tabEntry, "Tab")
+    Check(T.sent[2] = "{Blind}{F14 up}" && !St.held.Count, "Tab up retains modifiers")
+
+    T.sent := []
+    HoldDown(winEntry, "LWin")
+    HoldDown(winEntry, "RWin")
+    HoldUp(winEntry, "LWin")
+    Check(T.sent.Length = 1 && St.held.Has("F16"), "second Win source remains held")
+    HoldUp(winEntry, "RWin")
+    Check(T.sent.Length = 2 && !St.held.Count, "last Win source releases")
+
+    T.sent := []
+    shiftEntry := BRIDGE_TABLE[3]
+    HoldDown(shiftEntry, "LShift")
+    HoldDown(shiftEntry, "RShift")
+    HoldUp(shiftEntry, "LShift")
+    Check(T.sent.Length = 1 && St.held.Has("F15"), "second Shift source remains held")
+    HoldUp(shiftEntry, "RShift")
+    Check(T.sent.Length = 2 && !St.held.Count, "last Shift source releases")
+
+    T.sent := []
+    HoldDown(altEntry, "LAlt")
+    T.active := false
+    MaintainBridge()
+    Check(St.pendingReset && !St.held.Count && T.sent.Length = 1, "focus loss queues reset without injecting elsewhere")
+    HoldDown(tabEntry, "Tab")
+    Check(T.sent.Length = 1, "no down outside target")
+    T.active := true
+    Check(!BridgeReady(), "pending reset blocks bridge")
+    MaintainBridge()
+    Check(!St.pendingReset && T.sent[2] = "{Blind}{F17}", "focus return flushes reset")
+
+    T.active := false
+    T.sent := []
+    SendReset()
+    Check(St.pendingReset && !T.sent.Length, "panic outside target remains pending")
+    T.active := true
+    MaintainBridge()
+
+    T.sent := []
+    T.physical["LAlt"] := true
+    HoldDown(altEntry, "LAlt")
+    St.lastKeepalive := A_TickCount - KEEPALIVE_MS - 1
+    MaintainBridge()
+    Check(T.sent.Length = 2 && T.sent[2] = "{Blind}{F24}", "held key emits keepalive")
+    T.physical["LAlt"] := false
+    MaintainBridge()
+    Check(!St.held.Count && T.sent[3] = "{Blind}{F13 up}", "missing up reconciles physical key state")
+
+    T.sent := []
+    GuestHoldDown(altEntry)
+    GuestHoldDown(altEntry)
+    Check(T.sent.Length = 1, "guest ignores duplicate down")
+    G.lastActivity := A_TickCount - HOLD_TIMEOUT_MS - 1
+    GuestKeepalive()
+    GuestWatchdog()
+    Check(G.held.Count = 1 && T.sent.Length = 1, "keepalive preserves long hold")
+    G.lastActivity := A_TickCount - HOLD_TIMEOUT_MS - 1
+    GuestWatchdog()
+    Check(!G.held.Count && T.sent[2] = "{Blind}{Alt up}", "missing heartbeat triggers fail-safe release")
+    Check(T.sent.Length = 2, "watchdog preserves natural Ctrl")
+
+    T.sent := []
+    GuestHoldDown(altEntry)
+    GuestHoldDown(tabEntry)
+    GuestReset("host RESET")
+    Check(T.sent[3] = "{Blind}{Tab up}" && T.sent[4] = "{Blind}{Alt up}", "reset releases Tab before Alt")
+    Check(T.sent.Length = 4, "normal reset does not release native Ctrl")
+    T.physical["LCtrl"] := true
+    GuestReset("panik", true)
+    Check(T.sent[T.sent.Length] = "{Blind}{LCtrl up}", "explicit guest panic releases native modifier")
+    FileAppend "PASS " T.checks " behavioral assertions" Chr(10), "*"
+    ExitApp 0
+} catch as err {
+    FileAppend "FAIL: " err.Message Chr(10) err.Stack Chr(10), "*"
+    ExitApp 1
+}
+
+Check(ok, label) {
+    if !ok
+        throw Error(label)
+    T.checks += 1
+}
+Capture(keys) {
+    T.sent.Push(keys)
+}
+IsSM() {
+    return T.active
+}
+FakeKeyState(key, mode := "") {
+    return T.physical.Has(key) && T.physical[key]
+}
+Log(*) {
+}
+UpdateTray(*) {
+}
+GuestLog(*) {
+}
+GuestNotify(*) {
+}
+UpdateGuestTray(*) {
+}
+'''
+code += handlers("Host_PC_Bridge.ahk", [
+    "HoldDown", "HoldUp", "TapSend", "SendReset", "FlushPendingReset",
+    "BridgeReady", "MaintainBridge", "SourceReleaseReady"])
+code += "\n" + handlers("Guest_SM_Receiver.ahk", [
+    "GuestHoldDown", "GuestHoldUp", "GuestTap", "GuestReset", "GuestKeepalive", "GuestWatchdog"])
+
+with tempfile.TemporaryDirectory(prefix="shortcut-bridge-tests-") as folder:
+    harness = Path(folder) / "regression.ahk"
+    harness.write_text(code, encoding="utf-8")
+    print(run_ahk([str(harness)]), end="")
+
+
+# Register the real dynamic hotkey variants while every target gate is false.
+# No real bridge instance is started or replaced; callbacks still use fake IO.
+registration = code.replace('try {\n', 'try {\n    T.active := false\n    RegisterBridges()\n    FileAppend "PASS dynamic hotkey registration" Chr(10), "*"\n    ExitApp 0\n', 1)
+registration += "\n" + handlers("Host_PC_Bridge.ahk", ["RegisterBridges"])
+with tempfile.TemporaryDirectory(prefix="shortcut-bridge-registration-") as folder:
+    harness = Path(folder) / "registration.ahk"
+    harness.write_text(registration, encoding="utf-8")
+    print(run_ahk([str(harness)]), end="")

@@ -46,7 +46,7 @@ return
 ; YEREL PANİK TUŞU (VM içinden)
 ; ==============================================================================
 #SuspendExempt
-^!+r::GuestReset("panik tuşu")
+^!+r::GuestReset("panik tuşu", true)
 #SuspendExempt False
 
 ; ==============================================================================
@@ -62,29 +62,38 @@ RegisterReceivers() {
         }
     }
     Hotkey "*" BRIDGE_RESET, (*) => GuestReset("host RESET")
+    Hotkey "*" BRIDGE_KEEPALIVE, GuestKeepalive
+    Hotkey "*" BRIDGE_KEEPALIVE " up", (*) => 0
 }
 
 ; ==============================================================================
 ; KÖPRÜ İŞLEYİCİLERİ
 ; ==============================================================================
+; ------------------------------------------------------------------------------
+; {Blind} HER YERDE ZORUNLU
+; ------------------------------------------------------------------------------
+; {Blind} = "mevcut modifier durumuna dokunma, tuşu olduğu gibi bas".
+; Bu sayede bu script hangi modifier'ın basılı olduğunu BİLMEK ZORUNDA DEĞİL:
+;   * Alt+Tab       -> Alt burada basılı (F13 köprüsüyle)  -> {Blind}{Tab} = Alt+Tab
+;   * Ctrl+Tab      -> Ctrl burada basılı (doğal iletimle) -> {Blind}{Tab} = Ctrl+Tab
+;   * Ctrl+Shift+Tab-> Ctrl ve Shift doğal iletimle        -> bedava çalışır
+; Blind olmasa AHK, Tab'ı "yalnız Tab" yapmak için basılı modifier'ları bırakıp
+; geri basardı; bu sahte modifier-up üretip kombinasyonu bozardı.
+;
+; Hangi durumda köprülenip köprülenmeyeceği kararı HOST tarafında (`gate` alanı)
+; verilir. Buraya ulaşan köprü tuşu zaten geçerlidir, ek koşul aranmaz.
+; ------------------------------------------------------------------------------
 GuestHoldDown(e, *) {
+    Critical
     G.lastActivity := A_TickCount
 
     ; Auto-repeat koruması — aynı köprü tuşu iki kez down gelirse yoksay.
     if G.held.Has(e.bridge)
         return
 
-    ; needsAlt: Alt köprüsü basılı değilken bu tuş anlamsız.
-    ; Sıra bozulmuş olabilir (ağ jitter'ı yüzünden F14, F13'ten önce gelmiş).
-    ; Kullanıcı bunu "Alt+Tab bir pencere atladı" diye yaşar, o yüzden sessizce
-    ; düşürmek yerine logla.
-    if (e.needsAlt && !G.held.Has(ALT_BRIDGE)) {
-        GuestLog("DUSTU " e.bridge " (Alt kopru tusu basili degil)")
-        return
-    }
-
     G.held[e.bridge] := A_TickCount
-    Send "{" e.guest " down}"
+    Send "{Blind}{" e.guest " down}"
+    GuestLog("down " e.bridge " -> " e.guest)
 
     ; Overlay'in açılması için gerekirse mikro-bekleme. Varsayılan 0;
     ; overlay açılmıyorsa Bridge_Config.ahk'de GUEST_SETTLE_MS'i artır.
@@ -95,24 +104,29 @@ GuestHoldDown(e, *) {
 }
 
 GuestHoldUp(e, *) {
+    Critical
     G.lastActivity := A_TickCount
     if !G.held.Has(e.bridge)
         return
     G.held.Delete(e.bridge)
-    Send "{" e.guest " up}"
+    Send "{Blind}{" e.guest " up}"
+    GuestLog("up " e.bridge " -> " e.guest)
     UpdateGuestTray()
 }
 
 GuestTap(e, *) {
+    Critical
     G.lastActivity := A_TickCount
-    Send e.guest              ; tek-vuruşlularda guest bir Send dizisidir ("^w")
+    ; Modifier zaten doğal olarak iletildiği için yalnızca temel tuşu basıyoruz.
+    Send "{Blind}{" e.guest "}"
     GuestLog("tap " e.bridge " -> " e.guest)
 }
 
 ; ==============================================================================
 ; SIFIRLAMA
 ; ==============================================================================
-GuestReset(reason := "") {
+GuestReset(reason := "", allModifiers := false) {
+    Critical
     G.lastActivity := A_TickCount
 
     ; Tabloyu TERS sırada gez: Win/Shift/Tab önce, Alt en son bırakılsın.
@@ -121,15 +135,18 @@ GuestReset(reason := "") {
     loop BRIDGE_TABLE.Length {
         e := BRIDGE_TABLE[BRIDGE_TABLE.Length - A_Index + 1]
         if (e.mode = "hold" && G.held.Has(e.bridge))
-            Send "{" e.guest " up}"
+            Send "{Blind}{" e.guest " up}"
     }
     G.held.Clear()
 
     ; Emniyet kemeri: tabloda izlenmese bile mantıksal olarak basılı kalmış
     ; bir modifier varsa onu da bırak.
-    for key in ["Alt", "Ctrl", "Shift", "LWin", "RWin"]
-        if GetKeyState(key)
-            Send "{" key " up}"
+    ; Normal RESET dogal Ctrl/AltGr durumunu bozmamali.
+    ; Tum modifier'lari birakmak yalnizca yerel panik/tray islemidir.
+    if allModifiers
+        for key in ["LAlt", "RAlt", "LCtrl", "RCtrl", "LShift", "RShift", "LWin", "RWin"]
+            if GetKeyState(key)
+                Send "{Blind}{" key " up}"
 
     GuestLog("RESET (" reason ")")
     UpdateGuestTray()
@@ -138,6 +155,7 @@ GuestReset(reason := "") {
 }
 
 GuestWatchdog() {
+    Critical
     if (G.held.Count && (A_TickCount - G.lastActivity > HOLD_TIMEOUT_MS))
         GuestReset("zaman aşımı")
 }
@@ -145,10 +163,14 @@ GuestWatchdog() {
 ; ==============================================================================
 ; TRAY VE GERİ BİLDİRİM
 ; ==============================================================================
+GuestKeepalive(*) {
+    G.lastActivity := A_TickCount
+}
+
 BuildGuestTray() {
     tray := A_TrayMenu
     tray.Delete()
-    tray.Add "Modifier'ları Bırak`t(Ctrl+Alt+Shift+R)", (*) => GuestReset("tray")
+    tray.Add "Modifier'ları Bırak`t(Ctrl+Alt+Shift+R)", (*) => GuestReset("tray", true)
     tray.Add
     tray.Add "Yeniden Yükle", (*) => Reload()
     tray.Add "Çıkış", (*) => ExitApp()
@@ -159,7 +181,7 @@ UpdateGuestTray() {
     heldList := ""
     for bridge, tick in G.held
         heldList .= (heldList = "" ? "" : " ") bridge
-    tip := "SM Alıcı — " (A_IsSuspended ? "DURAKLATILDI" : "aktif")
+    tip := "SM Alici v" BRIDGE_PROTOCOL_VERSION " — " (A_IsSuspended ? "DURAKLATILDI" : "aktif")
     if (heldList != "")
         tip .= "`nBasılı: " heldList
     A_IconTip := tip
@@ -173,7 +195,7 @@ GuestNotify(msg, ms := 2000) {
 GuestLog(msg) {
     if !DEBUG_LOG
         return
-    try FileAppend A_Now " GUEST " msg "`n", A_Temp "\shortcut_bridge.log", "UTF-8"
+    try FileAppend A_TickCount " GUEST " msg "`n", A_Temp "\shortcut_bridge.log", "UTF-8"
 }
 
 OnGuestExit(*) {
