@@ -1,0 +1,308 @@
+﻿Shortcut Bridge diagnostic log
+1 tick=1439991625 GUEST START build=diag-1 protocol=4 ahk=2.0.21 admin=1 script=C:\Users\minanc\Desktop\VM\Guest_SM_Receiver.ahk
+2 tick=1439991625 GUEST CONFIG F13 -> Alt mode=hold gate=
+3 tick=1439991625 GUEST CONFIG F14 -> Tab mode=hold gate=mod
+4 tick=1439991625 GUEST CONFIG F15 -> Shift mode=hold gate=alt
+5 tick=1439991625 GUEST CONFIG F16 -> LWin mode=hold gate=
+6 tick=1439991625 GUEST RECEIVER START physical=[] logical=[]
+7 tick=1440053968 GUEST RAW LAlt up injected=1 flags=144 sc=184 osTick=1440053968 hwnd=8719274
+8 tick=1440053968 GUEST RAW LCtrl up injected=0 flags=128 sc=541 osTick=1440053968 hwnd=8719274
+9 tick=1440053968 GUEST RAW RAlt up injected=1 flags=145 sc=184 osTick=1440053968 hwnd=8719274
+10 tick=1440053968 GUEST RAW LCtrl up injected=1 flags=144 sc=157 osTick=1440053968 hwnd=8719274
+11 tick=1440053968 GUEST RAW RCtrl up injected=1 flags=145 sc=157 osTick=1440053968 hwnd=8719274
+12 tick=1440053968 GUEST RAW LShift up injected=1 flags=144 sc=170 osTick=1440053968 hwnd=8719274
+13 tick=1440053968 GUEST RAW RShift up injected=1 flags=145 sc=182 osTick=1440053968 hwnd=8719274
+14 tick=1440060890 GUEST RAW LWin up injected=0 flags=129 sc=91 osTick=1440060890 hwnd=0
+15 tick=1440060937 GUEST RAW RWin up injected=0 flags=129 sc=92 osTick=1440060937 hwnd=0
+16 tick=1440060953 GUEST RAW LCtrl up injected=0 flags=128 sc=29 osTick=1440060953 hwnd=0
+17 tick=1440060953 GUEST RAW RCtrl up injected=0 flags=129 sc=29 osTick=1440060953 hwnd=0
+18 tick=1440060953 GUEST RAW LShift up injected=0 flags=128 sc=42 osTick=1440060953 hwnd=0
+19 tick=1440060968 GUEST RAW RShift up injected=0 flags=129 sc=54 osTick=1440060968 hwnd=0
+20 tick=1440060984 GUEST RAW LAlt up injected=0 flags=128 sc=56 osTick=1440060984 hwnd=0
+21 tick=1440060984 GUEST RAW LCtrl up injected=0 flags=128 sc=541 osTick=1440060984 hwnd=0
+22 tick=1440061000 GUEST RAW RAlt up injected=0 flags=129 sc=56 osTick=1440060984 hwnd=0
+23 tick=1440074937 GUEST RAW F16 down injected=0 flags=0 sc=103 osTick=1440074937 hwnd=4132132
+24 tick=1440074937 GUEST RECEIVER RX_DOWN F16 physical=[] logical=[]
+25 tick=1440074937 GUEST RAW LWin down injected=1 flags=17 sc=91 osTick=1440074937 hwnd=4132132
+26 tick=1440074937 GUEST RECEIVER TX_DOWN F16 -> LWin physical=[] logical=[LWin,]
+27 tick=1440074984 GUEST RAW F24 down injected=0 flags=0 sc=118 osTick=1440074984 hwnd=4132132
+28 tick=1440075046 GUEST RAW F24 up injected=0 flags=128 sc=118 osTick=1440075046 hwnd=4132132
+29 tick=1440075078 GUEST RAW F16 up injected=0 flags=128 sc=103 osTick=1440075078 hwnd=4132132
+30 tick=1440075078 GUEST RECEIVER RX_UP F16 physical=[] logical=[LWin,]
+31 tick=1440075078 GUEST RAW LWin up injected=1 flags=145 sc=91 osTick=1440075078 hwnd=4132132
+32 tick=1440075078 GUEST RECEIVER TX_UP F16 -> LWin physical=[] logical=[]
+33 tick=1440077093 GUEST RAW F16 down injected=0 flags=0 sc=103 osTick=1440077093 hwnd=4132132
+34 tick=1440077093 GUEST RECEIVER RX_DOWN F16 physical=[] logical=[]
+35 tick=1440077093 GUEST RAW LWin down injected=1 flags=17 sc=91 osTick=1440077093 hwnd=4132132
+36 tick=1440077093 GUEST RECEIVER TX_DOWN F16 -> LWin physical=[] logical=[LWin,]
+37 tick=1440077218 GUEST RAW F24 down injected=0 flags=0 sc=118 osTick=1440077218 hwnd=4132132
+38 tick=1440077218 GUEST RAW F24 up injected=0 flags=128 sc=118 osTick=1440077218 hwnd=4132132
+39 tick=1440077328 GUEST RAW F16 up injected=0 flags=128 sc=103 osTick=1440077328 hwnd=4132132
+40 tick=1440077328 GUEST RECEIVER RX_UP F16 physical=[] logical=[LWin,]
+41 tick=1440077328 GUEST RAW LWin up injected=1 flags=145 sc=91 osTick=1440077328 hwnd=4132132
+42 tick=1440077328 GUEST RECEIVER TX_UP F16 -> LWin physical=[] logical=[]
+43 tick=1440078046 GUEST RAW F16 down injected=0 flags=0 sc=103 osTick=1440078046 hwnd=4132132
+44 tick=1440078046 GUEST RECEIVER RX_DOWN F16 physical=[] logical=[]
+45 tick=1440078046 GUEST RAW LWin down injected=1 flags=17 sc=91 osTick=1440078046 hwnd=4132132
+46 tick=1440078046 GUEST RECEIVER TX_DOWN F16 -> LWin physical=[] logical=[LWin,]
+47 tick=1440078140 GUEST RAW F16 up injected=0 flags=128 sc=103 osTick=1440078140 hwnd=4132132
+48 tick=1440078140 GUEST RECEIVER RX_UP F16 physical=[] logical=[LWin,]
+49 tick=1440078140 GUEST RAW LWin up injected=1 flags=145 sc=91 osTick=1440078140 hwnd=4132132
+50 tick=1440078140 GUEST RECEIVER TX_UP F16 -> LWin physical=[] logical=[]
+51 tick=1440080828 GUEST RAW F16 down injected=0 flags=0 sc=103 osTick=1440080828 hwnd=4132132
+52 tick=1440080828 GUEST RECEIVER RX_DOWN F16 physical=[] logical=[]
+53 tick=1440080828 GUEST RAW LWin down injected=1 flags=17 sc=91 osTick=1440080828 hwnd=4132132
+54 tick=1440080828 GUEST RAW F24 down injected=0 flags=0 sc=118 osTick=1440080828 hwnd=4132132
+55 tick=1440080828 GUEST RECEIVER TX_DOWN F16 -> LWin physical=[] logical=[LWin,]
+56 tick=1440080828 GUEST RAW F24 up injected=0 flags=128 sc=118 osTick=1440080828 hwnd=4132132
+57 tick=1440080968 GUEST RAW F16 up injected=0 flags=128 sc=103 osTick=1440080968 hwnd=4132132
+58 tick=1440080968 GUEST RECEIVER RX_UP F16 physical=[] logical=[LWin,]
+59 tick=1440080968 GUEST RAW LWin up injected=1 flags=145 sc=91 osTick=1440080968 hwnd=4132132
+60 tick=1440080968 GUEST RECEIVER TX_UP F16 -> LWin physical=[] logical=[]
+61 tick=1440081921 GUEST RAW LCtrl down injected=0 flags=0 sc=29 osTick=1440081921 hwnd=4132132
+62 tick=1440082140 GUEST RAW LCtrl up injected=0 flags=128 sc=29 osTick=1440082140 hwnd=4132132
+63 tick=1440083515 GUEST RAW F16 down injected=0 flags=0 sc=103 osTick=1440083515 hwnd=4132132
+64 tick=1440083515 GUEST RECEIVER RX_DOWN F16 physical=[] logical=[]
+65 tick=1440083515 GUEST RAW LWin down injected=1 flags=17 sc=91 osTick=1440083515 hwnd=4132132
+66 tick=1440083515 GUEST RECEIVER TX_DOWN F16 -> LWin physical=[] logical=[LWin,]
+67 tick=1440083546 GUEST RAW F24 down injected=0 flags=0 sc=118 osTick=1440083546 hwnd=4132132
+68 tick=1440083593 GUEST RAW F24 up injected=0 flags=128 sc=118 osTick=1440083593 hwnd=4132132
+69 tick=1440083703 GUEST RAW Tab down injected=0 flags=0 sc=15 osTick=1440083703 hwnd=4132132
+70 tick=1440083859 GUEST RAW Tab up injected=0 flags=128 sc=15 osTick=1440083859 hwnd=131802
+71 tick=1440084640 GUEST RAW F24 down injected=0 flags=0 sc=118 osTick=1440084640 hwnd=2888280
+72 tick=1440084687 GUEST RAW F24 up injected=0 flags=128 sc=118 osTick=1440084687 hwnd=2888280
+73 tick=1440085734 GUEST RAW F24 down injected=0 flags=0 sc=118 osTick=1440085734 hwnd=2888280
+74 tick=1440085734 GUEST RAW F24 up injected=0 flags=128 sc=118 osTick=1440085734 hwnd=2888280
+75 tick=1440086812 GUEST RAW F24 down injected=0 flags=0 sc=118 osTick=1440086812 hwnd=2888280
+76 tick=1440086843 GUEST RAW F24 up injected=0 flags=128 sc=118 osTick=1440086843 hwnd=2888280
+77 tick=1440087093 GUEST RAW Tab down injected=0 flags=0 sc=15 osTick=1440087093 hwnd=2888280
+78 tick=1440087265 GUEST RAW Tab up injected=0 flags=128 sc=15 osTick=1440087265 hwnd=2888280
+79 tick=1440087921 GUEST RAW F24 down injected=0 flags=0 sc=118 osTick=1440087921 hwnd=5707232
+80 tick=1440087921 GUEST RAW F24 up injected=0 flags=128 sc=118 osTick=1440087921 hwnd=5707232
+81 tick=1440088140 GUEST RAW F16 up injected=0 flags=128 sc=103 osTick=1440088140 hwnd=5707232
+82 tick=1440088140 GUEST RECEIVER RX_UP F16 physical=[] logical=[LWin,]
+83 tick=1440088140 GUEST RAW LWin up injected=1 flags=145 sc=91 osTick=1440088140 hwnd=5707232
+84 tick=1440088140 GUEST RECEIVER TX_UP F16 -> LWin physical=[] logical=[]
+85 tick=1440089156 GUEST RAW F13 down injected=0 flags=0 sc=100 osTick=1440089156 hwnd=5707232
+86 tick=1440089156 GUEST RECEIVER RX_DOWN F13 physical=[] logical=[]
+87 tick=1440089156 GUEST RAW LAlt down injected=1 flags=48 sc=56 osTick=1440089156 hwnd=5707232
+88 tick=1440089156 GUEST RECEIVER TX_DOWN F13 -> Alt physical=[] logical=[LAlt,]
+89 tick=1440089234 GUEST RAW F24 down injected=0 flags=32 sc=118 osTick=1440089234 hwnd=5707232
+90 tick=1440089234 GUEST RAW F24 up injected=0 flags=160 sc=118 osTick=1440089234 hwnd=5707232
+91 tick=1440089343 GUEST RAW F14 down injected=0 flags=32 sc=101 osTick=1440089343 hwnd=5707232
+92 tick=1440089343 GUEST RECEIVER RX_DOWN F14 physical=[] logical=[LAlt,]
+93 tick=1440089343 GUEST RAW Tab down injected=1 flags=48 sc=15 osTick=1440089343 hwnd=5707232
+94 tick=1440089343 GUEST RECEIVER TX_DOWN F14 -> Tab physical=[] logical=[LAlt,Tab,]
+95 tick=1440089515 GUEST RAW F14 up injected=0 flags=160 sc=101 osTick=1440089515 hwnd=4458142
+96 tick=1440089515 GUEST RECEIVER RX_UP F14 physical=[] logical=[LAlt,Tab,]
+97 tick=1440089515 GUEST RAW Tab up injected=1 flags=176 sc=15 osTick=1440089515 hwnd=4458142
+98 tick=1440089515 GUEST RECEIVER TX_UP F14 -> Tab physical=[] logical=[LAlt,]
+99 tick=1440090125 GUEST RAW F14 down injected=0 flags=32 sc=101 osTick=1440090125 hwnd=4458142
+100 tick=1440090125 GUEST RECEIVER RX_DOWN F14 physical=[] logical=[LAlt,]
+101 tick=1440090125 GUEST RAW Tab down injected=1 flags=48 sc=15 osTick=1440090125 hwnd=4458142
+102 tick=1440090125 GUEST RECEIVER TX_DOWN F14 -> Tab physical=[] logical=[LAlt,Tab,]
+103 tick=1440090265 GUEST RAW F14 up injected=0 flags=160 sc=101 osTick=1440090265 hwnd=4458142
+104 tick=1440090265 GUEST RECEIVER RX_UP F14 physical=[] logical=[LAlt,Tab,]
+105 tick=1440090265 GUEST RAW Tab up injected=1 flags=176 sc=15 osTick=1440090265 hwnd=4458142
+106 tick=1440090265 GUEST RECEIVER TX_UP F14 -> Tab physical=[] logical=[LAlt,]
+107 tick=1440090312 GUEST RAW F24 down injected=0 flags=32 sc=118 osTick=1440090312 hwnd=4458142
+108 tick=1440090343 GUEST RAW F24 up injected=0 flags=160 sc=118 osTick=1440090343 hwnd=4458142
+109 tick=1440090625 GUEST RAW F15 down injected=0 flags=32 sc=102 osTick=1440090625 hwnd=4458142
+110 tick=1440090625 GUEST RECEIVER RX_DOWN F15 physical=[] logical=[LAlt,]
+111 tick=1440090625 GUEST RAW LShift down injected=1 flags=48 sc=42 osTick=1440090625 hwnd=4458142
+112 tick=1440090625 GUEST RECEIVER TX_DOWN F15 -> Shift physical=[] logical=[LAlt,LShift,]
+113 tick=1440090781 GUEST RAW F14 down injected=0 flags=32 sc=101 osTick=1440090781 hwnd=4458142
+114 tick=1440090781 GUEST RECEIVER RX_DOWN F14 physical=[] logical=[LAlt,LShift,]
+115 tick=1440090781 GUEST RAW Tab down injected=1 flags=48 sc=15 osTick=1440090781 hwnd=4458142
+116 tick=1440090781 GUEST RECEIVER TX_DOWN F14 -> Tab physical=[] logical=[LAlt,LShift,Tab,]
+117 tick=1440090906 GUEST RAW F14 up injected=0 flags=160 sc=101 osTick=1440090906 hwnd=4458142
+118 tick=1440090906 GUEST RECEIVER RX_UP F14 physical=[] logical=[LAlt,LShift,Tab,]
+119 tick=1440090906 GUEST RAW Tab up injected=1 flags=176 sc=15 osTick=1440090906 hwnd=4458142
+120 tick=1440090906 GUEST RECEIVER TX_UP F14 -> Tab physical=[] logical=[LAlt,LShift,]
+121 tick=1440090984 GUEST RAW F15 up injected=0 flags=160 sc=102 osTick=1440090984 hwnd=4458142
+122 tick=1440090984 GUEST RECEIVER RX_UP F15 physical=[] logical=[LAlt,LShift,]
+123 tick=1440090984 GUEST RAW LShift up injected=1 flags=176 sc=42 osTick=1440090984 hwnd=4458142
+124 tick=1440090984 GUEST RECEIVER TX_UP F15 -> Shift physical=[] logical=[LAlt,]
+125 tick=1440091218 GUEST RAW F13 up injected=0 flags=160 sc=100 osTick=1440091218 hwnd=4458142
+126 tick=1440091218 GUEST RECEIVER RX_UP F13 physical=[] logical=[LAlt,]
+127 tick=1440091218 GUEST RAW LAlt up injected=1 flags=144 sc=56 osTick=1440091218 hwnd=4458142
+128 tick=1440091218 GUEST RECEIVER TX_UP F13 -> Alt physical=[] logical=[]
+129 tick=1440092625 GUEST RAW LCtrl down injected=0 flags=0 sc=29 osTick=1440092625 hwnd=4132132
+130 tick=1440092843 GUEST RAW F14 down injected=0 flags=0 sc=101 osTick=1440092843 hwnd=4132132
+131 tick=1440092843 GUEST RECEIVER RX_DOWN F14 physical=[LCtrl,] logical=[LCtrl,]
+132 tick=1440092843 GUEST RAW Tab down injected=1 flags=16 sc=15 osTick=1440092843 hwnd=4132132
+133 tick=1440092843 GUEST RECEIVER TX_DOWN F14 -> Tab physical=[LCtrl,] logical=[LCtrl,Tab,]
+134 tick=1440092859 GUEST RAW F24 down injected=0 flags=0 sc=118 osTick=1440092859 hwnd=4132132
+135 tick=1440092921 GUEST RAW F24 up injected=0 flags=128 sc=118 osTick=1440092921 hwnd=4132132
+136 tick=1440093046 GUEST RAW F14 up injected=0 flags=128 sc=101 osTick=1440093046 hwnd=4132132
+137 tick=1440093046 GUEST RECEIVER RX_UP F14 physical=[LCtrl,] logical=[LCtrl,Tab,]
+138 tick=1440093046 GUEST RAW Tab up injected=1 flags=144 sc=15 osTick=1440093046 hwnd=4132132
+139 tick=1440093046 GUEST RECEIVER TX_UP F14 -> Tab physical=[LCtrl,] logical=[LCtrl,]
+140 tick=1440093562 GUEST RAW F14 down injected=0 flags=0 sc=101 osTick=1440093562 hwnd=4132132
+141 tick=1440093562 GUEST RECEIVER RX_DOWN F14 physical=[LCtrl,] logical=[LCtrl,]
+142 tick=1440093562 GUEST RAW Tab down injected=1 flags=16 sc=15 osTick=1440093562 hwnd=4132132
+143 tick=1440093562 GUEST RECEIVER TX_DOWN F14 -> Tab physical=[LCtrl,] logical=[LCtrl,Tab,]
+144 tick=1440093656 GUEST RAW F14 up injected=0 flags=128 sc=101 osTick=1440093656 hwnd=4132132
+145 tick=1440093656 GUEST RECEIVER RX_UP F14 physical=[LCtrl,] logical=[LCtrl,Tab,]
+146 tick=1440093656 GUEST RAW Tab up injected=1 flags=144 sc=15 osTick=1440093656 hwnd=4132132
+147 tick=1440093656 GUEST RECEIVER TX_UP F14 -> Tab physical=[LCtrl,] logical=[LCtrl,]
+148 tick=1440093843 GUEST RAW F14 down injected=0 flags=0 sc=101 osTick=1440093843 hwnd=4132132
+149 tick=1440093843 GUEST RECEIVER RX_DOWN F14 physical=[LCtrl,] logical=[LCtrl,]
+150 tick=1440093843 GUEST RAW Tab down injected=1 flags=16 sc=15 osTick=1440093843 hwnd=4132132
+151 tick=1440093843 GUEST RECEIVER TX_DOWN F14 -> Tab physical=[LCtrl,] logical=[LCtrl,Tab,]
+152 tick=1440093984 GUEST RAW F24 down injected=0 flags=0 sc=118 osTick=1440093984 hwnd=4132132
+153 tick=1440093984 GUEST RAW F24 up injected=0 flags=128 sc=118 osTick=1440093984 hwnd=4132132
+154 tick=1440094000 GUEST RAW F14 up injected=0 flags=128 sc=101 osTick=1440094000 hwnd=4132132
+155 tick=1440094000 GUEST RECEIVER RX_UP F14 physical=[LCtrl,] logical=[LCtrl,Tab,]
+156 tick=1440094000 GUEST RAW Tab up injected=1 flags=144 sc=15 osTick=1440094000 hwnd=4132132
+157 tick=1440094000 GUEST RECEIVER TX_UP F14 -> Tab physical=[LCtrl,] logical=[LCtrl,]
+158 tick=1440094625 GUEST RAW LCtrl up injected=0 flags=128 sc=29 osTick=1440094625 hwnd=4132132
+159 tick=1440137171 GUEST RAW LCtrl down injected=0 flags=0 sc=29 osTick=1440137171 hwnd=4132132
+160 tick=1440137203 GUEST RAW F16 down injected=0 flags=0 sc=103 osTick=1440137203 hwnd=4132132
+161 tick=1440137203 GUEST RECEIVER RX_DOWN F16 physical=[LCtrl,] logical=[LCtrl,]
+162 tick=1440137203 GUEST RAW LWin down injected=1 flags=17 sc=91 osTick=1440137203 hwnd=4132132
+163 tick=1440137203 GUEST RECEIVER TX_DOWN F16 -> LWin physical=[LCtrl,] logical=[LCtrl,LWin,]
+164 tick=1440137296 GUEST RAW F24 down injected=0 flags=0 sc=118 osTick=1440137296 hwnd=4132132
+165 tick=1440137328 GUEST RAW F24 up injected=0 flags=128 sc=118 osTick=1440137328 hwnd=4132132
+166 tick=1440138406 GUEST RAW F24 down injected=0 flags=0 sc=118 osTick=1440138406 hwnd=4132132
+167 tick=1440138406 GUEST RAW F24 up injected=0 flags=128 sc=118 osTick=1440138406 hwnd=4132132
+168 tick=1440139515 GUEST RAW F24 down injected=0 flags=0 sc=118 osTick=1440139515 hwnd=4132132
+169 tick=1440139515 GUEST RAW LCtrl up injected=0 flags=128 sc=29 osTick=1440139515 hwnd=4132132
+170 tick=1440139515 GUEST RAW F24 up injected=0 flags=128 sc=118 osTick=1440139515 hwnd=4132132
+171 tick=1440139578 GUEST RAW F16 up injected=0 flags=128 sc=103 osTick=1440139578 hwnd=4132132
+172 tick=1440139578 GUEST RECEIVER RX_UP F16 physical=[] logical=[LWin,]
+173 tick=1440139578 GUEST RAW LWin up injected=1 flags=145 sc=91 osTick=1440139578 hwnd=4132132
+174 tick=1440139578 GUEST RECEIVER TX_UP F16 -> LWin physical=[] logical=[]
+175 tick=1440151328 GUEST RECEIVER RESET (tray) physical=[] logical=[]
+176 tick=1440157265 GUEST RAW F13 down injected=0 flags=0 sc=100 osTick=1440157265 hwnd=4132132
+177 tick=1440157265 GUEST RECEIVER RX_DOWN F13 physical=[] logical=[]
+178 tick=1440157265 GUEST RAW LAlt down injected=1 flags=48 sc=56 osTick=1440157265 hwnd=4132132
+179 tick=1440157265 GUEST RECEIVER TX_DOWN F13 -> Alt physical=[] logical=[LAlt,]
+180 tick=1440157296 GUEST RAW F24 down injected=0 flags=32 sc=118 osTick=1440157296 hwnd=4132132
+181 tick=1440157328 GUEST RAW F24 up injected=0 flags=160 sc=118 osTick=1440157328 hwnd=4132132
+182 tick=1440157406 GUEST RAW F14 down injected=0 flags=32 sc=101 osTick=1440157406 hwnd=4132132
+183 tick=1440157406 GUEST RECEIVER RX_DOWN F14 physical=[] logical=[LAlt,]
+184 tick=1440157406 GUEST RAW Tab down injected=1 flags=48 sc=15 osTick=1440157406 hwnd=4132132
+185 tick=1440157406 GUEST RECEIVER TX_DOWN F14 -> Tab physical=[] logical=[LAlt,Tab,]
+186 tick=1440157640 GUEST RAW F14 up injected=0 flags=160 sc=101 osTick=1440157640 hwnd=1310976
+187 tick=1440157640 GUEST RECEIVER RX_UP F14 physical=[] logical=[LAlt,Tab,]
+188 tick=1440157640 GUEST RAW Tab up injected=1 flags=176 sc=15 osTick=1440157640 hwnd=1310976
+189 tick=1440157640 GUEST RECEIVER TX_UP F14 -> Tab physical=[] logical=[LAlt,]
+190 tick=1440158421 GUEST RAW F24 down injected=0 flags=32 sc=118 osTick=1440158421 hwnd=1310976
+191 tick=1440158437 GUEST RAW F24 up injected=0 flags=160 sc=118 osTick=1440158437 hwnd=1310976
+192 tick=1440158515 GUEST RAW F15 down injected=0 flags=32 sc=102 osTick=1440158515 hwnd=1310976
+193 tick=1440158515 GUEST RECEIVER RX_DOWN F15 physical=[] logical=[LAlt,]
+194 tick=1440158515 GUEST RAW LShift down injected=1 flags=48 sc=42 osTick=1440158515 hwnd=1310976
+195 tick=1440158515 GUEST RECEIVER TX_DOWN F15 -> Shift physical=[] logical=[LAlt,LShift,]
+196 tick=1440158718 GUEST RAW F14 down injected=0 flags=32 sc=101 osTick=1440158718 hwnd=1310976
+197 tick=1440158718 GUEST RECEIVER RX_DOWN F14 physical=[] logical=[LAlt,LShift,]
+198 tick=1440158718 GUEST RAW Tab down injected=1 flags=48 sc=15 osTick=1440158718 hwnd=1310976
+199 tick=1440158718 GUEST RECEIVER TX_DOWN F14 -> Tab physical=[] logical=[LAlt,LShift,Tab,]
+200 tick=1440158875 GUEST RAW F14 up injected=0 flags=160 sc=101 osTick=1440158875 hwnd=1310976
+201 tick=1440158875 GUEST RECEIVER RX_UP F14 physical=[] logical=[LAlt,LShift,Tab,]
+202 tick=1440158875 GUEST RAW Tab up injected=1 flags=176 sc=15 osTick=1440158875 hwnd=1310976
+203 tick=1440158875 GUEST RAW F15 up injected=0 flags=160 sc=102 osTick=1440158875 hwnd=1310976
+204 tick=1440158875 GUEST RECEIVER TX_UP F14 -> Tab physical=[] logical=[LAlt,LShift,]
+205 tick=1440158890 GUEST RECEIVER RX_UP F15 physical=[] logical=[LAlt,LShift,]
+206 tick=1440158890 GUEST RAW LShift up injected=1 flags=176 sc=42 osTick=1440158890 hwnd=1310976
+207 tick=1440158890 GUEST RECEIVER TX_UP F15 -> Shift physical=[] logical=[LAlt,]
+208 tick=1440158953 GUEST RAW F13 up injected=0 flags=160 sc=100 osTick=1440158953 hwnd=1310976
+209 tick=1440158953 GUEST RECEIVER RX_UP F13 physical=[] logical=[LAlt,]
+210 tick=1440158968 GUEST RAW LAlt up injected=1 flags=144 sc=56 osTick=1440158968 hwnd=1310976
+211 tick=1440158968 GUEST RECEIVER TX_UP F13 -> Alt physical=[] logical=[]
+212 tick=1440160984 GUEST RAW LCtrl down injected=0 flags=0 sc=29 osTick=1440160984 hwnd=4132132
+213 tick=1440161281 GUEST RAW F14 down injected=0 flags=0 sc=101 osTick=1440161281 hwnd=4132132
+214 tick=1440161281 GUEST RECEIVER RX_DOWN F14 physical=[LCtrl,] logical=[LCtrl,]
+215 tick=1440161281 GUEST RAW Tab down injected=1 flags=16 sc=15 osTick=1440161281 hwnd=4132132
+216 tick=1440161281 GUEST RECEIVER TX_DOWN F14 -> Tab physical=[LCtrl,] logical=[LCtrl,Tab,]
+217 tick=1440161406 GUEST RAW F24 down injected=0 flags=0 sc=118 osTick=1440161406 hwnd=4132132
+218 tick=1440161406 GUEST RAW F24 up injected=0 flags=128 sc=118 osTick=1440161406 hwnd=4132132
+219 tick=1440161421 GUEST RAW F14 up injected=0 flags=128 sc=101 osTick=1440161421 hwnd=4132132
+220 tick=1440161421 GUEST RECEIVER RX_UP F14 physical=[LCtrl,] logical=[LCtrl,Tab,]
+221 tick=1440161421 GUEST RAW Tab up injected=1 flags=144 sc=15 osTick=1440161421 hwnd=4132132
+222 tick=1440161421 GUEST RECEIVER TX_UP F14 -> Tab physical=[LCtrl,] logical=[LCtrl,]
+223 tick=1440161640 GUEST RAW F14 down injected=0 flags=0 sc=101 osTick=1440161640 hwnd=4132132
+224 tick=1440161640 GUEST RECEIVER RX_DOWN F14 physical=[LCtrl,] logical=[LCtrl,]
+225 tick=1440161640 GUEST RAW Tab down injected=1 flags=16 sc=15 osTick=1440161640 hwnd=4132132
+226 tick=1440161640 GUEST RECEIVER TX_DOWN F14 -> Tab physical=[LCtrl,] logical=[LCtrl,Tab,]
+227 tick=1440161765 GUEST RAW F14 up injected=0 flags=128 sc=101 osTick=1440161765 hwnd=4132132
+228 tick=1440161765 GUEST RECEIVER RX_UP F14 physical=[LCtrl,] logical=[LCtrl,Tab,]
+229 tick=1440161765 GUEST RAW Tab up injected=1 flags=144 sc=15 osTick=1440161765 hwnd=4132132
+230 tick=1440161765 GUEST RECEIVER TX_UP F14 -> Tab physical=[LCtrl,] logical=[LCtrl,]
+231 tick=1440161875 GUEST RAW F14 down injected=0 flags=0 sc=101 osTick=1440161875 hwnd=4132132
+232 tick=1440161875 GUEST RECEIVER RX_DOWN F14 physical=[LCtrl,] logical=[LCtrl,]
+233 tick=1440161875 GUEST RAW Tab down injected=1 flags=16 sc=15 osTick=1440161875 hwnd=4132132
+234 tick=1440161875 GUEST RECEIVER TX_DOWN F14 -> Tab physical=[LCtrl,] logical=[LCtrl,Tab,]
+235 tick=1440162015 GUEST RAW F14 up injected=0 flags=128 sc=101 osTick=1440162015 hwnd=4132132
+236 tick=1440162015 GUEST RECEIVER RX_UP F14 physical=[LCtrl,] logical=[LCtrl,Tab,]
+237 tick=1440162015 GUEST RAW Tab up injected=1 flags=144 sc=15 osTick=1440162015 hwnd=4132132
+238 tick=1440162015 GUEST RECEIVER TX_UP F14 -> Tab physical=[LCtrl,] logical=[LCtrl,]
+239 tick=1440162984 GUEST RAW F14 down injected=0 flags=0 sc=101 osTick=1440162984 hwnd=4132132
+240 tick=1440162984 GUEST RECEIVER RX_DOWN F14 physical=[LCtrl,] logical=[LCtrl,]
+241 tick=1440162984 GUEST RAW Tab down injected=1 flags=16 sc=15 osTick=1440162984 hwnd=4132132
+242 tick=1440162984 GUEST RECEIVER TX_DOWN F14 -> Tab physical=[LCtrl,] logical=[LCtrl,Tab,]
+243 tick=1440163015 GUEST RAW F24 down injected=0 flags=0 sc=118 osTick=1440163015 hwnd=4132132
+244 tick=1440163015 GUEST RAW F24 up injected=0 flags=128 sc=118 osTick=1440163015 hwnd=4132132
+245 tick=1440163093 GUEST RAW F14 up injected=0 flags=128 sc=101 osTick=1440163093 hwnd=4132132
+246 tick=1440163093 GUEST RECEIVER RX_UP F14 physical=[LCtrl,] logical=[LCtrl,Tab,]
+247 tick=1440163093 GUEST RAW Tab up injected=1 flags=144 sc=15 osTick=1440163093 hwnd=4132132
+248 tick=1440163093 GUEST RECEIVER TX_UP F14 -> Tab physical=[LCtrl,] logical=[LCtrl,]
+249 tick=1440163203 GUEST RAW F14 down injected=0 flags=0 sc=101 osTick=1440163203 hwnd=4132132
+250 tick=1440163203 GUEST RECEIVER RX_DOWN F14 physical=[LCtrl,] logical=[LCtrl,]
+251 tick=1440163203 GUEST RAW Tab down injected=1 flags=16 sc=15 osTick=1440163203 hwnd=4132132
+252 tick=1440163203 GUEST RECEIVER TX_DOWN F14 -> Tab physical=[LCtrl,] logical=[LCtrl,Tab,]
+253 tick=1440163343 GUEST RAW F14 up injected=0 flags=128 sc=101 osTick=1440163343 hwnd=4132132
+254 tick=1440163343 GUEST RECEIVER RX_UP F14 physical=[LCtrl,] logical=[LCtrl,Tab,]
+255 tick=1440163343 GUEST RAW Tab up injected=1 flags=144 sc=15 osTick=1440163343 hwnd=4132132
+256 tick=1440163343 GUEST RECEIVER TX_UP F14 -> Tab physical=[LCtrl,] logical=[LCtrl,]
+257 tick=1440163578 GUEST RAW F14 down injected=0 flags=0 sc=101 osTick=1440163578 hwnd=4132132
+258 tick=1440163578 GUEST RECEIVER RX_DOWN F14 physical=[LCtrl,] logical=[LCtrl,]
+259 tick=1440163578 GUEST RAW Tab down injected=1 flags=16 sc=15 osTick=1440163578 hwnd=4132132
+260 tick=1440163578 GUEST RECEIVER TX_DOWN F14 -> Tab physical=[LCtrl,] logical=[LCtrl,Tab,]
+261 tick=1440163703 GUEST RAW F14 up injected=0 flags=128 sc=101 osTick=1440163703 hwnd=4132132
+262 tick=1440163703 GUEST RECEIVER RX_UP F14 physical=[LCtrl,] logical=[LCtrl,Tab,]
+263 tick=1440163703 GUEST RAW Tab up injected=1 flags=144 sc=15 osTick=1440163703 hwnd=4132132
+264 tick=1440163703 GUEST RECEIVER TX_UP F14 -> Tab physical=[LCtrl,] logical=[LCtrl,]
+265 tick=1440164156 GUEST RAW LCtrl up injected=0 flags=128 sc=29 osTick=1440164156 hwnd=4132132
+266 tick=1440165718 GUEST RAW F16 down injected=0 flags=0 sc=103 osTick=1440165718 hwnd=4132132
+267 tick=1440165718 GUEST RECEIVER RX_DOWN F16 physical=[] logical=[]
+268 tick=1440165718 GUEST RAW LWin down injected=1 flags=17 sc=91 osTick=1440165718 hwnd=4132132
+269 tick=1440165718 GUEST RECEIVER TX_DOWN F16 -> LWin physical=[] logical=[LWin,]
+270 tick=1440165765 GUEST RAW F24 down injected=0 flags=0 sc=118 osTick=1440165765 hwnd=4132132
+271 tick=1440165781 GUEST RAW F24 up injected=0 flags=128 sc=118 osTick=1440165781 hwnd=4132132
+272 tick=1440165843 GUEST RAW F16 up injected=0 flags=128 sc=103 osTick=1440165843 hwnd=4132132
+273 tick=1440165843 GUEST RECEIVER RX_UP F16 physical=[] logical=[LWin,]
+274 tick=1440165843 GUEST RAW LWin up injected=1 flags=145 sc=91 osTick=1440165843 hwnd=4132132
+275 tick=1440165843 GUEST RECEIVER TX_UP F16 -> LWin physical=[] logical=[]
+276 tick=1440167062 GUEST RAW F16 down injected=0 flags=0 sc=103 osTick=1440167062 hwnd=4132132
+277 tick=1440167062 GUEST RECEIVER RX_DOWN F16 physical=[] logical=[]
+278 tick=1440167062 GUEST RAW LWin down injected=1 flags=17 sc=91 osTick=1440167062 hwnd=4132132
+279 tick=1440167062 GUEST RECEIVER TX_DOWN F16 -> LWin physical=[] logical=[LWin,]
+280 tick=1440167078 GUEST RAW F24 down injected=0 flags=0 sc=118 osTick=1440167078 hwnd=4132132
+281 tick=1440167093 GUEST RAW F24 up injected=0 flags=128 sc=118 osTick=1440167093 hwnd=4132132
+282 tick=1440167468 GUEST RAW F16 up injected=0 flags=128 sc=103 osTick=1440167468 hwnd=132290
+283 tick=1440167468 GUEST RECEIVER RX_UP F16 physical=[] logical=[LWin,]
+284 tick=1440167468 GUEST RAW LWin up injected=1 flags=145 sc=91 osTick=1440167468 hwnd=132290
+285 tick=1440167468 GUEST RECEIVER TX_UP F16 -> LWin physical=[] logical=[]
+286 tick=1440168281 GUEST RAW F16 down injected=0 flags=0 sc=103 osTick=1440168281 hwnd=132290
+287 tick=1440168281 GUEST RECEIVER RX_DOWN F16 physical=[] logical=[]
+288 tick=1440168281 GUEST RAW LWin down injected=1 flags=17 sc=91 osTick=1440168281 hwnd=132290
+289 tick=1440168281 GUEST RECEIVER TX_DOWN F16 -> LWin physical=[] logical=[LWin,]
+290 tick=1440168296 GUEST RAW F24 down injected=0 flags=0 sc=118 osTick=1440168296 hwnd=132290
+291 tick=1440168296 GUEST RAW F24 up injected=0 flags=128 sc=118 osTick=1440168296 hwnd=132290
+292 tick=1440168609 GUEST RAW F16 up injected=0 flags=128 sc=103 osTick=1440168609 hwnd=4589214
+293 tick=1440168609 GUEST RECEIVER RX_UP F16 physical=[] logical=[LWin,]
+294 tick=1440168609 GUEST RAW LWin up injected=1 flags=145 sc=91 osTick=1440168609 hwnd=4589214
+295 tick=1440168625 GUEST RECEIVER TX_UP F16 -> LWin physical=[] logical=[]
+296 tick=1440170203 GUEST RAW F16 down injected=0 flags=0 sc=103 osTick=1440170203 hwnd=4589214
+297 tick=1440170203 GUEST RECEIVER RX_DOWN F16 physical=[] logical=[]
+298 tick=1440170203 GUEST RAW LWin down injected=1 flags=17 sc=91 osTick=1440170203 hwnd=4589214
+299 tick=1440170203 GUEST RECEIVER TX_DOWN F16 -> LWin physical=[] logical=[LWin,]
+300 tick=1440170296 GUEST RAW F16 up injected=0 flags=128 sc=103 osTick=1440170296 hwnd=4589214
+301 tick=1440170296 GUEST RECEIVER RX_UP F16 physical=[] logical=[LWin,]
+302 tick=1440170296 GUEST RAW LWin up injected=1 flags=145 sc=91 osTick=1440170296 hwnd=4589214
+303 tick=1440170296 GUEST RECEIVER TX_UP F16 -> LWin physical=[] logical=[]
+304 tick=1440212078 GUEST RAW LCtrl down injected=0 flags=0 sc=29 osTick=1440212078 hwnd=4589214
+305 tick=1440212578 GUEST RAW LCtrl up injected=0 flags=128 sc=29 osTick=1440212578 hwnd=4589214
+306 tick=1440233671 GUEST RECEIVER RESET (çıkış) physical=[] logical=[]
+307 tick=1440233734 GUEST STOP 
