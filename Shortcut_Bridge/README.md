@@ -1,5 +1,10 @@
 # SM Kısayol Köprüsü — AutoHotkey v2
 
+Günlük kullanım için **[logger'sız ZIP paketini](releases/Shortcut_Bridge_v4_loggersiz.zip)** indir.
+[Kurulum ve bilinen durumlar](RELEASE_README.md). Tek Win ile Başlat
+açılmaması bu pakette bilinçli olarak çözülmedi. Depodaki teşhis kaynakları
+korunur; ZIP yalnızca günlük kullanım dosyalarını içerir.
+
 Waterfox içindeki Horizon HTML/Blast oturumunda yerel Windows veya tarayıcı
 tarafından işlenen kısayolları sanal makineye (SM) taşır.
 

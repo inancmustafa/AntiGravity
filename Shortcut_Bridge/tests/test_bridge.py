@@ -4,11 +4,12 @@ Run: python tests/test_bridge.py [path-to-AutoHotkey64.exe]
 """
 from pathlib import Path
 import re
+import os
 import subprocess
 import sys
 import tempfile
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(os.environ.get("BRIDGE_TEST_ROOT", Path(__file__).resolve().parents[1]))
 AHK = sys.argv[1] if len(sys.argv) > 1 else r"C:\Program Files\AutoHotkey\v2\AutoHotkey64.exe"
 
 def run_ahk(args):
@@ -187,6 +188,10 @@ with tempfile.TemporaryDirectory(prefix="shortcut-bridge-registration-") as fold
     harness = Path(folder) / "registration.ahk"
     harness.write_text(registration, encoding="utf-8")
     print(run_ahk([str(harness)]), end="")
+
+if not (ROOT / "Bridge_Logger.ahk").exists():
+    print("PASS logger-free runtime: no logger module")
+    sys.exit(0)
 
 # Exercise the actual observer hook and buffered file writer without sending keys.
 logger_smoke = (
