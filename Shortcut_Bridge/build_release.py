@@ -3,7 +3,7 @@ from pathlib import Path
 import hashlib, os, re, subprocess, sys, zipfile
 
 ROOT = Path(__file__).resolve().parent
-NAME = "Shortcut_Bridge_v5_loggersiz"
+NAME = "Shortcut_Bridge_v6_loggersiz"
 PACKAGE = ROOT / "dist" / NAME
 
 def exact(text, old, new):
@@ -26,6 +26,8 @@ def runtime(name):
             'lastKeepalive: 0, wasActive: false }')
         text = pattern(text, r'^TraceStart\("HOST".*?(?=^; SM_Baslat\.bat)')
         text = exact(text, "else if !St.diagnostic\n", "else\n")
+        text = exact(text,
+            '        if (St.diagnostic && key = "F8")      ; teşhis modunda F8 = pencere bağla\n            continue\n', '')
         text = pattern(text, r'^    if Trace\.enabled \{.*?^    }\n')
         text = pattern(text, r'^Log\(msg\) \{.*?^}', 'Log(msg) {\n    ; No logging in this package.\n}')
     else:
@@ -59,7 +61,7 @@ output = ROOT / "releases" / (NAME + ".zip")
 output.parent.mkdir(exist_ok=True)
 with zipfile.ZipFile(output, "w", zipfile.ZIP_DEFLATED) as archive:
     for name, data in sorted(files.items()):
-        info = zipfile.ZipInfo(NAME + "/" + name, date_time=(2026, 9, 30, 0, 0, 0))
+        info = zipfile.ZipInfo(NAME + "/" + name, date_time=(2026, 10, 1, 0, 0, 0))
         info.compress_type = zipfile.ZIP_DEFLATED
         archive.writestr(info, data)
 with zipfile.ZipFile(output) as archive:

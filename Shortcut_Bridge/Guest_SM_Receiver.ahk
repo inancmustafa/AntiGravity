@@ -47,6 +47,8 @@ SetKeyDelay -1, -1
 G := { held: Map(), lastActivity: A_TickCount, winCombo: false, winWatch: 0,
        diagnostic: A_Args.Length >= 1 && A_Args[1] = "diag" }
 
+G.carry := [], G.carryTick := 0    ; taşıma dizisi çözücüsü
+
 AUTOSTART_MENU := "Oturum açılışında başlat"
 AUTOSTART_LINK := "Shortcut Bridge SM Alici.lnk"
 
@@ -82,6 +84,13 @@ RegisterReceivers() {
     Hotkey "*" BRIDGE_RESET, (*) => GuestReset("host RESET")
     Hotkey "*" BRIDGE_KEEPALIVE, GuestKeepalive
     Hotkey "*" BRIDGE_KEEPALIVE " up", (*) => 0
+    ; Waterfox kısayollarının taşınması (Bridge_Config > TAŞIMA)
+    Hotkey "*" CARRY_START, GuestCarryStart
+    Hotkey "*" CARRY_START " up", (*) => 0
+    for i, carrier in CARRY_DIGITS {
+        Hotkey "*" carrier, GuestCarryDigit.Bind(i - 1)
+        Hotkey "*" carrier " up", (*) => 0
+    }
 }
 
 ; ==============================================================================
@@ -156,6 +165,39 @@ GuestTap(e, *) {
     GuestLog("tap " e.bridge " -> " e.guest)
 }
 
+; ------------------------------------------------------------------------------
+; TAŞINAN KISAYOLLAR: F18 + 4 hane -> tuş. Tuş {Blind} ile basılır; Ctrl/Shift
+; doğal yoldan, Alt/Win köprüden zaten basılıdır.
+; ------------------------------------------------------------------------------
+GuestCarryStart(*) {
+    Critical
+    G.lastActivity := A_TickCount
+    G.carry := [], G.carryTick := A_TickCount
+}
+
+GuestCarryDigit(digit, *) {
+    Critical
+    G.lastActivity := A_TickCount
+    if (!G.carryTick || A_TickCount - G.carryTick > CARRY_TIMEOUT_MS) {
+        G.carry := [], G.carryTick := 0          ; başlangıçsız / bayat dizi
+        return
+    }
+    G.carry.Push(digit)
+    if (G.carry.Length < 4)
+        return
+    key := CarryDecode(G.carry)
+    G.carry := [], G.carryTick := 0
+    if (key = "") {
+        GuestLog("CARRY_REJECT")
+        GuestNotify("Taşıma dizisi reddedildi — host ve SM aynı sürüm mü?")
+        return
+    }
+    if G.held.Has(WIN_BRIDGE)
+        G.winCombo := true
+    Send "{Blind}{" key "}"
+    GuestLog("CARRY_TX")
+}
+
 ; ==============================================================================
 ; SIFIRLAMA
 ; ==============================================================================
@@ -172,6 +214,7 @@ GuestReset(reason := "", allModifiers := false) {
             Send "{Blind}{" e.guest " up}"
     }
     G.held.Clear()
+    G.carry := [], G.carryTick := 0
 
     ; Emniyet kemeri: tabloda izlenmese bile mantıksal olarak basılı kalmış
     ; bir modifier varsa onu da bırak.

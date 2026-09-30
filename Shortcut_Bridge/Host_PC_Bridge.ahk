@@ -24,6 +24,7 @@
 ;       dokunmaz: Alt+Tab, Win normal çalışır.
 ;
 ; Elle açtığın bir pencereyi sonradan köprüye bağlamak: Ctrl+Alt+Shift+M
+; SM ile ana PC arasında geçiş: Ctrl+Alt+Shift+H
 ;
 ; Tüm köprü tanımları Bridge_Config.ahk'dedir. Bu dosyada tuş adı sabitlenmez.
 ;
@@ -59,6 +60,15 @@ St := { smHwnd: 0, held: Map(), sources: Map(), pendingReset: false, tabMismatch
         lastKeepalive: 0, wasActive: false,
         diagnostic: A_Args.Length >= 1 && A_Args[1] = "diag" }
 
+; Kontrol kısayolları: Ctrl+Alt+Shift + tuş. Taşınan tuşlarla aynı hotkey'in
+; öncelikli varyantı olarak kaydedilir (RegisterBridges).
+CONTROL_ACTIONS := Map(
+    "vk53", ToggleSuspend,      ; S  Köprüyü duraklat / devam ettir
+    "vk52", PanicRelease,       ; R  Panik: SM'deki köprü tuşlarını bırak
+    "vk51", CloseSMWindow,      ; Q  SM penceresini kapat
+    "vk4D", MarkActiveAsSM,     ; M  Aktif pencereyi SM penceresi olarak işaretle
+    "vk48", ToggleSMFocus)      ; H  SM <-> ana PC geçişi
+
 RegisterBridges()
 BuildTray()
 UpdateTray()
@@ -84,13 +94,8 @@ return
 ; ==============================================================================
 ; OPERASYON HOTKEY'LERİ
 ; ==============================================================================
-; Suspend'e dahil edilmezler; yoksa köprüyü duraklattıktan sonra geri açamazsın.
-#SuspendExempt
-^!+s::ToggleSuspend()       ; Köprüyü duraklat / devam ettir
-^!+r::PanicRelease()        ; Panik: SM'deki tüm modifier'ları bırak
-^!+q::CloseSMWindow()       ; SM penceresini kapat
-^!+m::MarkActiveAsSM()      ; Aktif pencereyi SM penceresi olarak işaretle
-#SuspendExempt False
+; Ctrl+Alt+Shift+S/R/Q/M/H -> CONTROL_ACTIONS. Suspend'den muaftırlar ("S"
+; seçeneği); yoksa köprüyü duraklattıktan sonra geri açamazsın.
 
 ; ==============================================================================
 ; SM PENCERESİ
@@ -149,7 +154,7 @@ RegisterBridges() {
     gates := Map(
         "",    (hk) => BridgeReady(),
         "alt", (hk) => BridgeReady() && St.held.Has(ALT_BRIDGE),
-        "mod", (hk) => BridgeReady() && (St.held.Has(ALT_BRIDGE) || GetKeyState("Ctrl", "P"))
+        "mod", ModGateReady
     )
 
     ; --- down / tap olayları: kendi kapılarının altında ----------------------
@@ -190,6 +195,24 @@ RegisterBridges() {
             Hotkey "~*" hostKey " up", HoldUp.Bind(e, hostKey)
         }
     }
+
+    ; --- Kontrol kısayolları ve Waterfox kısayollarının taşınması -------------
+    ; Aynı tuşa İKİ AYRI hotkey (ör. ^!+s ve *vk53) kaydedilmez: AHK'nın hangisini
+    ; seçeceği belgelenmemiştir (bkz. Tab notu). Tek hotkey, iki varyant: önce
+    ; kontrol varyantı (Ctrl+Alt+Shift fiziksel, duraklatmadan muaf), sonra taşıma.
+    ; Hiçbir varyant uygun değilse tuş normal yoluna devam eder.
+    HotIf ControlReady
+    for key, action in CONTROL_ACTIONS
+        Hotkey "*" key, ControlHotkey.Bind(action), "S"
+    HotIf FullscreenReady                 ; Ctrl+F11 -> Waterfox tam ekranı
+    Hotkey "*F11", FullscreenToggle, "S"
+    for key in CARRY_KEYS {
+        if (St.diagnostic && key = "F8")      ; teşhis modunda F8 = pencere bağla
+            continue
+        HotIf CarryReady.Bind(key)
+        Hotkey "*" key, CarrySend.Bind(key)
+    }
+    HotIf
 }
 
 ; ==============================================================================
@@ -257,6 +280,63 @@ TapSend(e, *) {
     ; HoldDown/HoldUp ile aynı Blind ilkesi burada da uygulanır.
     SendEvent "{Blind}{" e.bridge "}"
     Log("tap " e.bridge)
+}
+
+; Tab (F14): Alt köprüsü, Win köprüsü veya fiziksel Ctrl basılıyken.
+ModGateReady(*) {
+    return BridgeReady() && (St.held.Has(ALT_BRIDGE) || St.held.Has(WIN_BRIDGE)
+        || GetKeyState("Ctrl", "P"))
+}
+
+ControlReady(*) {
+    return GetKeyState("Ctrl", "P") && GetKeyState("Alt", "P") && GetKeyState("Shift", "P")
+}
+
+ControlHotkey(action, *) {
+    action()
+}
+
+; Ctrl+F11: SM penceresinde Waterfox'un tam ekranını aç/kapat. F11 SM'e gider;
+; Waterfox'ta kullanılan tek kısayol budur. Duraklatılmışken de çalışır.
+FullscreenReady(*) {
+    return IsSM() && GetKeyState("Ctrl", "P") && !GetKeyState("Alt", "P")
+        && !GetKeyState("Shift", "P") && !St.held.Has(WIN_BRIDGE)
+}
+
+FullscreenToggle(*) {
+    ; {Blind} YOK: AHK basılı Ctrl'ü bırakıp Waterfox'a yalın F11 gönderir,
+    ; sonra Ctrl'ü geri basar.
+    SendEvent "{F11}"
+    Log("fullscreen")
+}
+
+; Bu tuş şu an Waterfox'a değil SM'e mi gitmeli? (Bridge_Config > TAŞIMA)
+CarryReady(key, *) {
+    if (!BridgeReady() || GetKeyState("RAlt", "P"))   ; AltGr: Türkçe karakterler
+        return false
+    if (CONTROL_ACTIONS.Has(key) && ControlReady())
+        return false
+    if (key = "F11" && FullscreenReady())
+        return false
+    if RegExMatch(key, "^F\d+$")                       ; F1-F12
+        return true
+    if St.held.Has(WIN_BRIDGE)                          ; Win+D, Win+E, Win+Sol...
+        return true
+    if !GetKeyState("Ctrl", "P")
+        return false
+    if St.held.Has(ALT_BRIDGE)                          ; Ctrl+Alt+X (Waterfox Ctrl+X görürdü)
+        return true
+    return !CARRY_NATURAL.Has(key)                      ; Ctrl(+Shift)+X, pano hariç
+}
+
+; Tuşu yut, yerine taşıyıcı diziyi gönder. {Blind}: doğal Ctrl/Shift korunur.
+; Hangi tuşun taşındığı loglanmaz (logger harf kaydetmez).
+CarrySend(key, *) {
+    Critical
+    if !BridgeReady()
+        return
+    SendEvent "{Blind}" CarrySequence(key)
+    Log("carry")
 }
 
 FlushPendingReset() {
@@ -367,6 +447,34 @@ MarkActiveAsSM(*) {
     Log("MARK target=" hwnd)
     UpdateTray()
     Notify("SM penceresi işaretlendi: " exe)
+}
+
+; ------------------------------------------------------------------------------
+; SM <-> ANA PC GEÇİŞİ (Ctrl+Alt+Shift+H)
+; SM penceresi öndeyse simge durumuna küçültülür; Windows bir önceki pencereyi
+; öne getirir. SM önde değilse SM penceresi geri getirilir. Köprü yalnızca SM
+; penceresi öndeyken çalıştığı için duraklatmaya gerek yoktur.
+; Önce kısayol tuşlarının bırakılması beklenir: bırakma olayları hâlâ öndeki
+; pencereye gitsin, SM'de Ctrl/Alt takılı kalmasın.
+; ------------------------------------------------------------------------------
+ToggleSMFocus(*) {
+    if (!St.smHwnd || !WinExist("ahk_id " St.smHwnd)) {
+        Notify("SM penceresi yok")
+        return
+    }
+    for key in ["Ctrl", "Alt", "Shift", "h"]
+        KeyWait(key, "T2")
+    if WinActive("ahk_id " St.smHwnd) {
+        SendReset()
+        WinMinimize("ahk_id " St.smHwnd)
+        Log("LEAVE target=" St.smHwnd)
+        Notify("Ana PC")
+    } else {
+        WinActivate("ahk_id " St.smHwnd)
+        Log("RETURN target=" St.smHwnd)
+        Notify("SM")
+    }
+    UpdateTray()
 }
 
 CloseSMWindow(*) {

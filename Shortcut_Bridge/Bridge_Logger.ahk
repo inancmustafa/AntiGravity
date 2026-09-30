@@ -40,6 +40,8 @@ TraceKeyName(vk) {
         164, "LAlt", 165, "RAlt", 91, "LWin", 92, "RWin", 119, "F8")
     if names.Has(vk)
         return names[vk]
+    if (vk >= 129 && vk <= 134)      ; F18-F23: taşıma haneleri hangi tuşa basıldığını
+        return "CARRY"               ; ele verir; yalnızca türü kaydedilir
     if (vk >= 124 && vk <= 135)
         return "F" (vk - 111)
     return ""

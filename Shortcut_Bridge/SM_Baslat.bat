@@ -14,6 +14,7 @@ REM kopru calismaz. Onun icin bu bat'a gerek yok.
 REM
 REM Cikis: tray ikonundan Cikis, veya Ctrl+Alt+Shift+Q ile yalnizca SM
 REM penceresini kapat. (Kopru calisirken Alt+F4 SM'e gider!)
+REM Ana PC'ye gecis: Ctrl+Alt+Shift+H (tekrar basinca SM'e doner).
 REM ===========================================================================
 
 setlocal

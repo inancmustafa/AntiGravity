@@ -1,6 +1,6 @@
 # SM Kısayol Köprüsü — AutoHotkey v2
 
-Günlük kullanım için **[logger'sız ZIP paketini](releases/Shortcut_Bridge_v5_loggersiz.zip)** indir.
+Günlük kullanım için **[logger'sız ZIP paketini](releases/Shortcut_Bridge_v6_loggersiz.zip)** indir.
 [Kurulum ve bilinen durumlar](RELEASE_README.md). Depodaki teşhis kaynakları
 korunur; ZIP yalnızca günlük kullanım dosyalarını içerir.
 
@@ -44,7 +44,7 @@ dokunmaz. "system" geçerli olursa köprü duraklatılmış halde canlı oturumd
 4. Host'ta `SM_Baslat.bat` dosyasını çalıştır. Köprü yeni bir Waterfox
    penceresi açar, o pencerenin HWND'sini tutar ve F11 ile tam ekrana geçer.
 5. Horizon masaüstüne bağlan ve uzak masaüstü alanına tıkla.
-6. Her iki tray ipucunda **v5** görünmeli. Bu gösterge otomatik sürüm
+6. Her iki tray ipucunda **v6** görünmeli. Bu gösterge otomatik sürüm
    uzlaşması değildir; iki tarafta aynı yapılandırma dosyası kullanılmalıdır.
 
 Köprü yalnızca işaretlenmiş Waterfox **penceresinde** ve aktif sekmenin başlığı
@@ -90,6 +90,7 @@ Fiziksel klavye
 | Alt köprülenirken sol/sağ Shift | F15 down/up | Shift down/up |
 | Sol/sağ Win | F16 down/up | LWin down/up |
 | Sıfırlama | F17 | Köprünün tuttuğu tuşları bırakır |
+| Waterfox kısayolu (aşağıya bak) | F18 + F19–F23 dizisi | Aynı tuş, SM'de |
 | Canlılık sinyali | F24 | Alıcının zaman aşımını yeniler |
 
 Ctrl doğrudan iletilir. Ctrl+Tab ve Ctrl+Shift+Tab için yalnızca Tab köprülenir.
@@ -111,6 +112,46 @@ olayı Win down ile Win up arasına girdiği için Windows bunu "tek Win" saymaz
 (host üzerinde ölçüldü). Win basılıyken başka tuş gelmediyse alıcı, bıraktıktan
 sonra temiz bir Win vuruşu ekler; Win+D gibi kombinasyonlarda eklemez.
 Başlat açılıp hemen kapanıyorsa `GUEST_WIN_TAP_FIX := false` yap.
+
+## Waterfox kısayolları SM'e gider
+
+SM penceresinde, Horizon sekmesi aktifken Waterfox'un **hiçbir kısayolu
+çalışmaz**; tuşlar SM'e gider. Waterfox bazı kısayolları sayfaya hiç bırakmaz
+(Ctrl+T/N/W, Ctrl+Shift+T/W/P/Q, Ctrl+PgUp/PgDn...), Horizon da bunları
+iletemez. Köprü sol Alt'ı ve Win'i yuttuğu için Waterfox Ctrl+Alt+T'yi Ctrl+T,
+Ctrl+Alt+C'yi Ctrl+C olarak görüyordu.
+
+Host tuşu yutar ve bir taşıyıcı dizi gönderir: F18 + üç hane + bir kontrol
+hanesi (F19–F23). Alıcı diziyi çözer ve aynı tuşu SM'de basar; Ctrl/Shift
+doğal yoldan, Alt/Win köprüden zaten basılıdır. Kontrol hanesi protokol
+sürümünü içerir: host ve SM farklı sürümdeyse dizi reddedilir ve alıcı uyarı
+gösterir. Tuş listesi ve kurallar `Bridge_Config.ahk` > TAŞIMA bölümündedir.
+
+| Ne basılırsa | Nereye gider |
+|---|---|
+| Ctrl+harf/rakam/ok/F-tuşu... (Ctrl+Shift dahil) | SM |
+| Ctrl+Alt+... (ör. Ctrl+Alt+T, Ctrl+Alt+C) | SM |
+| Win+... (ör. Win+D, Win+E, Win+Sol, Win+Tab) | SM, tuş SM içinde üretilir |
+| F1–F12 (F5, F11, F12 dahil) | SM |
+| **Ctrl+F11** | Waterfox tam ekranını aç/kapat (Waterfox'ta kalan tek kısayol) |
+| **Ctrl+C, Ctrl+V, Ctrl+X, Ctrl+Insert** | Doğal yol (Horizon pano eşitlemesi için) |
+| AltGr ile Türkçe karakterler | Doğal yol |
+| Ctrl+Alt+Shift+S/R/Q/M/H | Host (köprü kontrolleri) |
+
+Ctrl+C/V/X Waterfox kısayolu değildir; Horizon yerel pano ile SM panosunu bu
+tuşlarla eşitler. Taşınırsa kopyala-yapıştır bozulabilir. Yine de taşımak
+istersen `CARRY_NATURAL` listesini boşalt.
+
+Win+D daha önce SM'e ulaşmıyordu: Win köprüden, D ise Horizon'dan ayrı ayrı
+geliyordu. Artık Win basılıyken basılan tuş da alıcı tarafından SM içinde
+üretiliyor.
+
+F11 SM'e gider; SM sekmesinde Waterfox'un tam ekranını **Ctrl+F11** açıp
+kapatır (köprü duraklatılmışken de). F6 ile üst paneli açmak yalnızca SM
+sekmesi dışında çalışır.
+
+Kontrol kısayolları taşınan tuşlarla aynı hotkey'in öncelikli varyantıdır;
+aynı tuşa iki ayrı hotkey kaydedilmez (AHK'nın hangisini seçeceği belgelenmemiş).
 
 ## Odak kaybı ve takılı tuşlar
 
@@ -140,7 +181,14 @@ kaybı ya da uzak oturum odağı sorunları uçtan uca ölçülmelidir.
 | Ctrl+Alt+Shift+S | Duraklat/devam et |
 | Ctrl+Alt+Shift+R | RESET gönder; SM odakta değilse dönüşe ertele |
 | Ctrl+Alt+Shift+M | Aktif pencereyi SM penceresi olarak işaretle |
+| Ctrl+Alt+Shift+H | SM öndeyse ana PC'ye geç (SM simge durumuna küçülür); değilse SM'e dön |
+| Ctrl+F11 | SM sekmesinde Waterfox tam ekranını aç/kapat (F11 SM'e gider) |
 | Ctrl+Alt+Shift+Q | Köprü penceresini kapat |
+
+Ctrl+Alt+Shift+H geçişi tuşlar bırakılınca yapılır; böylece bırakma olayları
+hâlâ öndeki pencereye gider ve SM'de takılı Ctrl/Alt kalmaz. Ana PC'de
+Alt+Tab ile SM penceresine dönmek de çalışır; köprü SM penceresi öne gelince
+kendiliğinden devreye girer, duraklatmaya gerek yoktur.
 
 Host ve guest tray menülerinde çıkış ve yeniden yükleme seçenekleri bulunur.
 SM içinde Ctrl+Alt+Shift+R, doğal modifier'lar dahil acil bırakma yapar.
@@ -218,6 +266,12 @@ bağlamak, pencere eşleşmesini modifier kısayollarından bağımsız sınar.
 - Host durdurulduğunda guest tuttuğu tuşları zaman aşımı sonunda bırakmalı.
 - Normal Waterfox penceresinde yerel kısayollar çalışmaya devam etmeli.
 - Tek Win: SM'de Başlat açılmalı. Win+D ve Win+E'de Başlat açılmamalı.
+- SM'de Win+D masaüstünü göstermeli; Win+Tab görev görünümünü açmalı.
+- SM'de Ctrl+T, Ctrl+Alt+T, Ctrl+Alt+C, Ctrl+W ve F5 SM'deki uygulamaya gitmeli;
+  Waterfox'ta yeni sekme açılmamalı, sekme kapanmamalı, sayfa yenilenmemeli.
+- SM'de F11 SM'deki uygulamaya gitmeli; Ctrl+F11 Waterfox tam ekranını açıp kapatmalı.
+- Ctrl+C / Ctrl+V ile yerel PC ile SM arasında kopyala-yapıştır çalışmalı.
+- Ctrl+Alt+Shift+S SM'deyken de köprüyü duraklatmalı.
 - Bağlı oturumda host tray ipucu "aktif" göstermeli (sekme başlığı eşleşiyor).
 - Aynı Waterfox penceresinde başka sekmeye geç: Alt+Tab host'ta çalışmalı;
   Horizon sekmesine dönünce yeniden SM'e gitmeli.
@@ -227,13 +281,29 @@ bağlamak, pencere eşleşmesini modifier kısayollarından bağımsız sınar.
 Önce kısayolun gerçekten tarayıcıda kaldığını ölç. Ardından
 Bridge_Config içindeki uygun tap satırını aç. Guest alanı temel tuş adıdır
 (ör. w); Ctrl gibi doğal modifier'ı tekrar ekleme.
-F17 RESET, F24 canlılık için ayrılmıştır. F18–F23 ek kısayollara ayrılabilir.
+F17 RESET, F24 canlılık, F18–F23 Waterfox kısayollarının taşınması için
+ayrılmıştır; boş taşıyıcı kalmadı. Waterfox'un yuttuğu bir tuş taşınmıyorsa
+onu `CARRY_KEYS` listesinin **sonuna** ekle ve `BRIDGE_PROTOCOL_VERSION`'ı artır.
 F14 için ayrıca ^Tab hotkey'i ekleme; ortak Tab kapısı kullanılır.
 
 Değişiklikleri her iki tarafa aynı config ile dağıt ve scriptleri yeniden başlat.
 Eski `.7z` arşivleri, v4 paketi ve eski teşhis logu `_arsiv/` klasöründedir
 (git dışı). Güncel Git kaynaklarını veya v5 paketini kullan. Paket
 `python build_release.py` ile üretilir ve üretim sırasında testlerden geçer.
+
+## v6 değişiklikleri
+
+- SM sekmesinde Waterfox'un hiçbir kısayolu çalışmıyor; tuşlar F18–F23
+  taşıma protokolüyle SM'e gidiyor (Ctrl+T, Ctrl+Alt+T, Ctrl+Alt+C, F5, F11...).
+- Waterfox tam ekranı SM sekmesinde Ctrl+F11 ile açılıp kapanıyor.
+- Win+D, Win+E gibi Win kombinasyonları SM'e ulaşıyor; Win+Tab da köprüleniyor.
+- Ctrl+C/V/X/Insert pano eşitlemesi için doğal yoldan geçmeye devam ediyor.
+- Kontrol kısayolları taşıma hotkey'lerinin öncelikli varyantı oldu ve SM'deyken
+  de fiziksel Ctrl+Alt+Shift ile çalışıyor.
+- Ctrl+Alt+Shift+H: SM ile ana PC arasında tek tuşla geçiş.
+- Teşhis logu taşıma hanelerini yalnızca "CARRY" olarak kaydediyor.
+- Test betiği uyarıları konsola yazdırıyor; tek başına doğrulanan logger
+  artık ekranda bir uyarı penceresi açıp beklemiyor.
 
 ## v5 değişiklikleri
 
@@ -260,7 +330,8 @@ Eski `.7z` arşivleri, v4 paketi ve eski teşhis logu `_arsiv/` klasöründedir
 ## Waterfox üst kenar paneli
 
 Tam ekranda fare üst kenara geldiğinde araç çubuklarının açılmasını
-`fullscreen-ui.css` engeller. **F6** paneli gösterir, **Esc** gizler.
+`fullscreen-ui.css` engeller. **F6** paneli gösterir, **Esc** gizler. SM
+sekmesinde F6 ve F11 SM'e gider; tam ekran için orada Ctrl+F11 kullan.
 F11 yine tam ekrandan çıkıp girmeyi sağlar. Klavyeyle adres çubuğuna
 odaklanma gibi yerleşik erişim yolları korunur; kapatılan şey fare tetikleyicisidir.
 
