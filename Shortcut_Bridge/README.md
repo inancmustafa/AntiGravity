@@ -1,8 +1,7 @@
 # SM Kısayol Köprüsü — AutoHotkey v2
 
-Günlük kullanım için **[logger'sız ZIP paketini](releases/Shortcut_Bridge_v4_loggersiz.zip)** indir.
-[Kurulum ve bilinen durumlar](RELEASE_README.md). Tek Win ile Başlat
-açılmaması bu pakette bilinçli olarak çözülmedi. Depodaki teşhis kaynakları
+Günlük kullanım için **[logger'sız ZIP paketini](releases/Shortcut_Bridge_v5_loggersiz.zip)** indir.
+[Kurulum ve bilinen durumlar](RELEASE_README.md). Depodaki teşhis kaynakları
 korunur; ZIP yalnızca günlük kullanım dosyalarını içerir.
 
 Waterfox içindeki Horizon HTML/Blast oturumunda yerel Windows veya tarayıcı
@@ -12,25 +11,54 @@ tarafından işlenen kısayolları sanal makineye (SM) taşır.
 Alt+Tab ve Ctrl+Tab kombinasyonları ise yerelde işleniyordu. Bu gözlem
 tarayıcı, Horizon veya ortam değiştiğinde yeniden doğrulanmalıdır.
 
+## Neden tarayıcı tek başına yetmiyor
+
+Chromium'da Horizon tam ekranda `navigator.keyboard.lock()` ile Alt+Tab ve
+Win'i yakalayabilir. Waterfox 6.7.2 (Gecko 153) bu API'yi sunmuyor. Onun yerine
+`requestFullscreen({keyboardLock})` seçeneği var; ama bu seçenek yalnızca
+`"none"` ve `"browser"` değerlerini kabul ediyor, `"system"` geçersiz
+(30.09.2026'da ölçüldü). Yani Gecko en fazla tarayıcı kısayollarını
+kilitleyebilir; Alt+Tab ve Win işletim sisteminde kalır. Horizon bu seçeneği
+zaten istemediği için `dom.fullscreen.keyboard_lock.enabled` ayarını açmak bir
+şey değiştirmez. Horizon'un yerel istemcisi de kurum tarafından desteklenmiyor.
+
+Waterfox güncellendiğinde yeniden kontrol et:
+
+```powershell
+python tools\probe_keyboard_lock.py
+```
+
+Geçici bir profille headless açılır; günlük profile, Horizon'a veya klavyeye
+dokunmaz. "system" geçerli olursa köprü duraklatılmış halde canlı oturumda dene.
+
 ## Kurulum ve kullanım
 
 1. Host PC ve SM'de AutoHotkey v2 kurulu olmalı.
 2. Host'ta bu klasörü tut. `Bridge_Config.ahk` içindeki Waterfox yolu ve
    `SM_URL` ortamına uygun olmalı.
 3. SM'e **`Guest_SM_Receiver.ahk`, `Bridge_Config.ahk` ve `Bridge_Logger.ahk` dosyalarını birlikte**
-   aynı klasöre kopyala; alıcıyı çalıştır.
+   aynı klasöre kopyala; alıcıyı çalıştır. Alıcının tray menüsünden
+   **Oturum açılışında başlat**'ı işaretlersen sonraki oturumlarda kendiliğinden
+   açılır. AutoHotkey UI Access bileşeniyle kuruluysa (`AutoHotkey64_UIA.exe`)
+   kısayol onu kullanır; alıcı yönetici pencerelerinde de çalışır.
 4. Host'ta `SM_Baslat.bat` dosyasını çalıştır. Köprü yeni bir Waterfox
    penceresi açar, o pencerenin HWND'sini tutar ve F11 ile tam ekrana geçer.
 5. Horizon masaüstüne bağlan ve uzak masaüstü alanına tıkla.
-6. Her iki tray ipucunda **v4** görünmeli. Bu gösterge otomatik sürüm
+6. Her iki tray ipucunda **v5** görünmeli. Bu gösterge otomatik sürüm
    uzlaşması değildir; iki tarafta aynı yapılandırma dosyası kullanılmalıdır.
 
-Köprü yalnızca işaretlenmiş Waterfox **penceresine** bağlıdır. Aynı pencerenin
-başka sekmesine, adres çubuğuna veya Horizon giriş ekranına geçildiğini
-algılamaz. Köprü aktifken bu alanlarda çalışmadan önce köprüyü duraklat.
+Köprü yalnızca işaretlenmiş Waterfox **penceresinde** ve aktif sekmenin başlığı
+`SM_TITLE_MATCH` (varsayılan `Horizon`) metnini içerdiğinde çalışır. Aynı
+pencerede başka bir sekmeye geçince Alt+Tab, Ctrl+Tab ve Win host'ta normal
+çalışır; tray ipucu "bekliyor: sekme 'Horizon' değil" gösterir. Horizon giriş
+ekranının başlığı da "VMware Horizon" olduğu için köprü orada da açıktır.
+Adres çubuğu odağını ayırt edemez; orada çalışacaksan köprüyü duraklat.
+Bağlı oturumda tray "aktif" demiyorsa (Alt+Tab host'a gidiyorsa) sekme başlığı
+eşleşmiyordur: `SM_TITLE_MATCH` değerini düzelt veya `""` yaparak kontrolü kapat.
 
 Elle açılmış bir pencereyi bağlamak için o pencereyi öne getir ve
-Ctrl+Alt+Shift+M kullan. Diğer Waterfox pencereleri köprülenmez.
+Ctrl+Alt+Shift+M kullan. Yalnızca `SM_ALLOWED_EXES` içindeki tarayıcılar
+(Waterfox, Firefox) bağlanabilir; başka pencereler reddedilir.
 
 İsteğe bağlı profil ayarları:
 ```powershell
@@ -78,6 +106,12 @@ tekrar seçim için Tab'a yeniden basıp bırakılır.
 Alt+Tab seçicisi Alt tutuldukça açık kalmalı, Alt bırakılınca seçim
 onaylanmalıdır. Win+D/E/R gibi kombinasyonlarda harf normal kanaldan geçer.
 
+Tek Win basışı SM'de Başlat menüsünü açar. Köprüde Win bırakılırken F16-up
+olayı Win down ile Win up arasına girdiği için Windows bunu "tek Win" saymaz
+(host üzerinde ölçüldü). Win basılıyken başka tuş gelmediyse alıcı, bıraktıktan
+sonra temiz bir Win vuruşu ekler; Win+D gibi kombinasyonlarda eklemez.
+Başlat açılıp hemen kapanıyorsa `GUEST_WIN_TAP_FIX := false` yap.
+
 ## Odak kaybı ve takılı tuşlar
 
 - Host, odağın ayrıldığını 100 ms aralıkla kontrol eder; tutulmuş köprü
@@ -85,7 +119,8 @@ onaylanmalıdır. Win+D/E/R gibi kombinasyonlarda harf normal kanaldan geçer.
 - RESET beklerken yeni köprü down olayları kabul edilmez. Dönüşte F17
   gönderildikten sonra köprü yeniden hazırdır.
 - Host, tuş tutulduğu sürece saniyede bir F24 yollar. Böylece uzun Alt
-  tutuşları, bağlantı sağlıklıyken 8 saniye sonunda kesilmez.
+  tutuşları, bağlantı sağlıklıyken 8 saniye sonunda kesilmez. İlk sinyal
+  tutuşun 1. saniyesinde gider; kısa vuruşlar sinyalsiz kalır.
 - Fiziksel olarak bırakılmış ama up olayı kaçmış kaynaklar host'ta uzlaştırılır.
 - Alıcı 8 saniye boyunca köprü olayı/canlılık sinyali almazsa tuttuğu
   tuşları bırakır (watchdog kontrol aralığı 1 saniyedir).
@@ -130,8 +165,9 @@ Python 3 ve AutoHotkey v2 gerekir. Farklı AHK yolu ikinci argümanla verilebili
 Tüm AHK dosyaları /validate ile yükleme kontrolünden geçer. Regresyon testi
 gerçek host/guest işleyici gövdelerini çıkarıp sahte giriş/çıkışla çalıştırır;
 klavye olayı enjekte etmez veya Horizon açmaz. Modifier koruması, tekrar
-bastırma, ortak sol/sağ kaynaklar, odak dışı RESET, canlılık ve watchdog
-kontrol edilir. Bu testler tarayıcı veya uzak masaüstü iletimini kanıtlamaz.
+bastırma, ortak sol/sağ kaynaklar, odak dışı RESET, canlılık zamanlaması,
+watchdog, sekme başlığı kontrolü, pencere işaretleme filtresi, tek Win
+vuruşu ve otomatik başlatma kısayolu kontrol edilir. Bu testler tarayıcı veya uzak masaüstü iletimini kanıtlamaz.
 
 ### Taşıyıcı iletimi
 
@@ -155,7 +191,8 @@ Ayrıntılı kısa deneme: [LOGGER_DENEME.md](LOGGER_DENEME.md).
    host-*.log ve guest-*.log. Tray menüsündeki "Log klasorunu ac" da kullanılabilir.
 5. RAW satırları Windows olaylarını; HOST HANDLER/DOWN satırları köprü
    işlemini; GUEST RX/TX satırları alım ve yerel gönderimi gösterir.
-   STATE satırındaki target=0 / matched=0 hedef pencere sorununun kanıtıdır.
+   STATE satırındaki target=0 / matched=0 hedef pencere sorununun kanıtıdır;
+   titleMatch=0 ön plandaki sekmenin başlığının SM_TITLE_MATCH içermediğini gösterir.
 6. Teşhis bitince tray'den çık ve normal host/alıcıyı yeniden başlat.
 
 Logger harf/rakam veya pencere başlığı kaydetmez; yalnızca Tab, modifier,
@@ -180,6 +217,10 @@ bağlamak, pencere eşleşmesini modifier kısayollarından bağımsız sınar.
   SM'de takılı tuş kalmamalı.
 - Host durdurulduğunda guest tuttuğu tuşları zaman aşımı sonunda bırakmalı.
 - Normal Waterfox penceresinde yerel kısayollar çalışmaya devam etmeli.
+- Tek Win: SM'de Başlat açılmalı. Win+D ve Win+E'de Başlat açılmamalı.
+- Bağlı oturumda host tray ipucu "aktif" göstermeli (sekme başlığı eşleşiyor).
+- Aynı Waterfox penceresinde başka sekmeye geç: Alt+Tab host'ta çalışmalı;
+  Horizon sekmesine dönünce yeniden SM'e gitmeli.
 
 ## Yeni kısayol ve dağıtım
 
@@ -190,8 +231,21 @@ F17 RESET, F24 canlılık için ayrılmıştır. F18–F23 ek kısayollara ayrı
 F14 için ayrıca ^Tab hotkey'i ekleme; ortak Tab kapısı kullanılır.
 
 Değişiklikleri her iki tarafa aynı config ile dağıt ve scriptleri yeniden başlat.
-Eski Shortcut_Bridge.7z arşivi bu sürümün dağıtımı değildir; güncel Git
-kaynaklarını kullan.
+Eski `.7z` arşivleri, v4 paketi ve eski teşhis logu `_arsiv/` klasöründedir
+(git dışı). Güncel Git kaynaklarını veya v5 paketini kullan. Paket
+`python build_release.py` ile üretilir ve üretim sırasında testlerden geçer.
+
+## v5 değişiklikleri
+
+- Tek Win basışı SM'de Başlat menüsünü açıyor (`GUEST_WIN_TAP_FIX`).
+- Canlılık sinyali artık tutuşun ilk 100 ms'inde değil, 1. saniyesinde gidiyor.
+- Sekme kontrolü: köprü yalnızca başlığı `SM_TITLE_MATCH` içeren sekmede çalışıyor.
+- Ctrl+Alt+Shift+M yalnızca `SM_ALLOWED_EXES` içindeki tarayıcıları bağlıyor.
+- Açılışta yalnızca gerçek Waterfox pencereleri (`MozillaWindowClass`) bekleniyor.
+- Alıcı tray menüsüne "Oturum açılışında başlat" eklendi (UI Access destekli).
+- `tools/probe_keyboard_lock.py`: Waterfox'un Keyboard Lock desteğini ölçer.
+- Logger STATE satırına `titleMatch` bayrağı eklendi; başlığın kendisi kaydedilmez.
+- Eski arşivler, v4 paketi ve teşhis logu depodan çıkarıldı.
 
 ## v4 düzeltmeleri
 

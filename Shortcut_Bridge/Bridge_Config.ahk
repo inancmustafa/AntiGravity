@@ -12,7 +12,7 @@
 ; Dosyalar UTF-8 olarak kaydedilir. AHK v2 UTF-8 BOM ile de okuyabilir.
 ; ==============================================================================
 
-BRIDGE_PROTOCOL_VERSION := 4
+BRIDGE_PROTOCOL_VERSION := 5
 
 ; ------------------------------------------------------------------------------
 ; TEMEL İLKE: MODIFIER'LAR ZATEN İLETİLİYOR
@@ -102,9 +102,13 @@ KEEPALIVE_MS := 1000
 
 ; Alt köprüsünün hangi tuş olduğunu tablodan türet (gate koşulları kullanır).
 ALT_BRIDGE := ""
-for _e in BRIDGE_TABLE
+WIN_BRIDGE := ""
+for _e in BRIDGE_TABLE {
     if (_e.guest = "Alt")
         ALT_BRIDGE := _e.bridge
+    if (_e.guest = "LWin")
+        WIN_BRIDGE := _e.bridge
+}
 
 ; ------------------------------------------------------------------------------
 ; SM PENCERESİ VE TARAYICI (yalnızca host tarafında kullanılır)
@@ -126,6 +130,19 @@ for _e in BRIDGE_TABLE
 SM_BROWSER_EXE := "C:\Program Files\Waterfox\waterfox.exe"
 SM_URL         := "https://vgpu-secure.fnss.com.tr/portal/webclient/#/desktop"
 
+; SEKME KONTROLÜ: Waterfox'un pencere başlığı AKTİF SEKMENİN başlığıdır. Köprü
+; yalnızca başlık bu metni içerdiğinde çalışır (büyük/küçük harf duyarsız).
+; Böylece aynı pencerede başka bir sekmeye geçince Alt+Tab/Ctrl+Tab/Win yutulmaz.
+; Horizon sekmesi "VMware Horizon" başlığını taşır; Omnissa sürümlerinde
+; "Omnissa Horizon" olabilir. Bağlı oturumda başlık farklıysa burayı düzelt;
+; boş bırakırsan ("") sekme kontrolü kapanır ve pencerenin tamamı köprülenir.
+; Adres çubuğuna odaklanmayı ayırt edemez; o durumda köprüyü duraklat.
+SM_TITLE_MATCH := "Horizon"
+
+; Ctrl+Alt+Shift+M ile yalnızca bu tarayıcı süreçlerinin pencereleri bağlanabilir.
+; Yanlış pencere (ör. editör) işaretlenip orada Alt+Tab/Win'in yutulması engellenir.
+SM_ALLOWED_EXES := ["waterfox.exe", "firefox.exe"]
+
 ; Köprü penceresi açıldıktan sonra tam ekrana (F11) geçsin mi?
 ; Not: yalnızca SM_Baslat.bat ile açılan pencereyi etkiler. Waterfox'u kendin
 ; açtığında tam ekran olmaz ve köprü de çalışmaz.
@@ -143,10 +160,26 @@ HOST_KEY_DELAY  := 10     ; Host SendEvent tuş gecikmesi (ms). Horizon canvas'�
 GUEST_SETTLE_MS := 0      ; Guest: Alt down sonrası bekleme. Overlay açılmıyorsa
                           ; 10-30 arası dene.
 HOLD_TIMEOUT_MS := 8000   ; Guest watchdog: bu süre hareketsizlikte her şeyi bırak.
+GUEST_WIN_TAP_FIX := true ; Guest: tek Win basışında Başlat menüsünü aç. Köprüde Win
+                          ; bırakılmadan önce F16-up olayı araya girdiği için Windows
+                          ; bunu "tek Win" saymaz (ölçüldü). Başka tuşa basılmadıysa
+                          ; alıcı temiz bir Win vuruşu ekler. Başlat açılıp hemen
+                          ; kapanıyorsa false yap.
 DEBUG_LOG       := false  ; true -> %TEMP%\ShortcutBridgeLogs (veya Diag_*.ahk kullan)
 
 ; Hatalı/çakışan protokol tanımlarını başlatmadan yakala.
 ValidateBridgeConfig()
+
+SMTitleMatches(title) {
+    return SM_TITLE_MATCH = "" || InStr(title, SM_TITLE_MATCH)
+}
+
+IsAllowedSMExe(exe) {
+    for allowed in SM_ALLOWED_EXES
+        if (exe = allowed)
+            return true
+    return false
+}
 
 ValidateBridgeConfig() {
     used := Map(BRIDGE_RESET, true, BRIDGE_KEEPALIVE, true)
@@ -154,6 +187,9 @@ ValidateBridgeConfig() {
     if (BRIDGE_RESET = BRIDGE_KEEPALIVE || KEEPALIVE_MS <= 0
         || HOLD_TIMEOUT_MS <= KEEPALIVE_MS * 2)
         throw Error("Gecersiz RESET/KEEPALIVE veya zamanlama")
+    SplitPath SM_BROWSER_EXE, &browserName
+    if !IsAllowedSMExe(browserName)
+        throw Error("SM_BROWSER_EXE, SM_ALLOWED_EXES icinde degil: " browserName)
     for e in BRIDGE_TABLE {
         if used.Has(e.bridge)
             throw Error("Kopru tusu cakismasi: " e.bridge)

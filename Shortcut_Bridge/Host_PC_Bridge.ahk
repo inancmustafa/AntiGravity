@@ -55,7 +55,7 @@ SetTitleMatchMode 2
 ;   pendingReset : odak SM'den çıkmışken bir tuş bırakıldı; SM'e dönünce
 ;                  RESET gönderilecek
 ; ------------------------------------------------------------------------------
-St := { smHwnd: 0, held: Map(), sources: Map(), pendingReset: false,
+St := { smHwnd: 0, held: Map(), sources: Map(), pendingReset: false, tabMismatch: false,
         lastKeepalive: 0, wasActive: false,
         diagnostic: A_Args.Length >= 1 && A_Args[1] = "diag" }
 
@@ -95,13 +95,22 @@ return
 ; ==============================================================================
 ; SM PENCERESİ
 ; ==============================================================================
-; Köprünün tamamı buna bağlı: yalnızca St.smHwnd penceresi aktifken tetiklenir.
-; Kendi açtığın diğer Waterfox pencereleri farklı HWND'ye sahip olduğu için
-; hiç etkilenmez.
+; Köprünün tamamı buna bağlı: yalnızca St.smHwnd penceresi aktifken VE aktif
+; sekmenin başlığı SM_TITLE_MATCH'i içerirken tetiklenir. Kendi açtığın diğer
+; Waterfox pencereleri farklı HWND'ye sahip olduğu için hiç etkilenmez; aynı
+; penceredeki başka sekmeler başlık kontrolüyle ayrılır.
 IsSM() {
-    if !St.smHwnd
+    if (!St.smHwnd || !WinActive("ahk_id " St.smHwnd))
         return false
-    return WinActive("ahk_id " St.smHwnd) ? true : false
+    title := ""
+    try title := WinGetTitle("ahk_id " St.smHwnd)
+    return SMTitleMatches(title) ? true : false
+}
+
+; Waterfox'un yalnızca gerçek tarayıcı pencereleri (popup/ipucu pencereleri değil).
+SMWindowCriteria() {
+    SplitPath SM_BROWSER_EXE, &exeName
+    return "ahk_class MozillaWindowClass ahk_exe " exeName
 }
 
 ; Pencere kapandıysa köprüyü pasifleştir — yoksa HWND yeniden kullanılabilir ve
@@ -112,6 +121,7 @@ CheckSMWindow() {
         St.held.Clear()
         St.sources.Clear()
         St.pendingReset := false
+        St.tabMismatch := false
         UpdateTray()
         Notify("SM penceresi kapandı — köprü pasif")
     }
@@ -198,6 +208,10 @@ HoldDown(e, hostKey, *) {
     ; {F13 down} üretir.
     if St.held.Has(e.bridge)
         return
+    ; İlk canlılık sinyali tutuşun 1. saniyesinde gider; kısa vuruşlar sinyalsiz
+    ; kalır. (Eskiden eski zaman damgası yüzünden ilk 100 ms'de gidiyordu.)
+    if !St.held.Count
+        St.lastKeepalive := A_TickCount
     St.held[e.bridge] := A_TickCount
     SendEvent "{Blind}{" e.bridge " down}"
     Log("down " e.bridge)
@@ -278,13 +292,22 @@ MaintainBridge() {
         hwnd := WinExist("A")
         exe := ""
         try exe := WinGetProcessName("ahk_id " hwnd)
+        ; Başlığın kendisi kaydedilmez; yalnızca SM_TITLE_MATCH ile eşleşip eşleşmediği.
+        title := ""
+        try title := WinGetTitle("ahk_id " hwnd)
         state := "target=" St.smHwnd " foreground=" hwnd " exe=" exe
             . " matched=" active " pending=" St.pendingReset " suspended=" A_IsSuspended
-            . " held=" St.held.Count " " TraceModifiers()
+            . " held=" St.held.Count " titleMatch=" (SMTitleMatches(title) ? 1 : 0) " " TraceModifiers()
         if (state != Trace.lastState) {
             Trace.lastState := state
             TraceWrite("STATE", state)
         }
+    }
+    ; Pencere önde ama başka sekme: tray'de göster (başlık eşleşmesi teşhisi).
+    mismatch := St.smHwnd && !active && WinActive("ahk_id " St.smHwnd)
+    if (mismatch != St.tabMismatch) {
+        St.tabMismatch := mismatch
+        UpdateTray()
     }
     if (!active && St.wasActive && St.held.Count)
         SendReset()
@@ -331,9 +354,11 @@ MarkActiveAsSM(*) {
         Notify("Aktif pencere bulunamadı")
         return
     }
-    if (St.diagnostic && StrLower(WinGetProcessName("ahk_id " hwnd)) != "waterfox.exe") {
-        Log("MARK_REJECT foreground is not Waterfox")
-        Notify("Once SM'nin Waterfox penceresine tikla, sonra F8.", 4000)
+    exe := ""
+    try exe := WinGetProcessName("ahk_id " hwnd)
+    if !IsAllowedSMExe(exe) {
+        Log("MARK_REJECT exe=" exe)
+        Notify("Bağlanamaz: " exe "`nSM'nin tarayıcı penceresine tıklayıp tekrar dene.", 4000)
         return
     }
     SendReset()
@@ -341,7 +366,7 @@ MarkActiveAsSM(*) {
     St.pendingReset := true
     Log("MARK target=" hwnd)
     UpdateTray()
-    Notify("SM penceresi işaretlendi: " WinGetProcessName("A"))
+    Notify("SM penceresi işaretlendi: " exe)
 }
 
 CloseSMWindow(*) {
@@ -359,6 +384,7 @@ CloseSMWindow(*) {
         Notify("SM penceresi kapatıldı")
     }
     St.smHwnd := 0
+    St.tabMismatch := false
     UpdateTray()
 }
 
@@ -382,7 +408,7 @@ StartSM(*) {
     }
 
     before := Map()
-    for hwnd in WinGetList("ahk_exe waterfox.exe")
+    for hwnd in WinGetList(SMWindowCriteria())
         before[hwnd] := true
 
     Run Format('"{1}" --new-window "{2}"', SM_BROWSER_EXE, SM_URL)
@@ -410,7 +436,7 @@ WaitForNewWaterfoxWindow(before) {
     deadline := A_TickCount + SM_LAUNCH_TIMEOUT_MS
     while (A_TickCount < deadline) {
         Sleep 250
-        for hwnd in WinGetList("ahk_exe waterfox.exe")
+        for hwnd in WinGetList(SMWindowCriteria())
             if !before.Has(hwnd)
                 return hwnd
     }
@@ -446,6 +472,8 @@ UpdateTray() {
         state := "DURAKLATILDI"
     else if !St.smHwnd
         state := "pasif (SM penceresi yok)"
+    else if St.tabMismatch
+        state := "bekliyor: sekme '" SM_TITLE_MATCH "' değil"
     else
         state := "aktif"
 

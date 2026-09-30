@@ -1,2 +1,5 @@
 /dist/
-!releases/Shortcut_Bridge_v4_loggersiz.zip
+/_arsiv/
+*.log
+*.7z
+!releases/Shortcut_Bridge_v5_loggersiz.zip

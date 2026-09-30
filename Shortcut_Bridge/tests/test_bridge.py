@@ -30,7 +30,10 @@ def handlers(filename, names):
         match = re.search(r"^" + name + r"\([^\n]*\) \{.*?^\}", source, re.M | re.S)
         assert match, name
         body = re.sub(r"\bSendEvent\b|\bSend\b", "Capture", match[0])
-        body = body.replace("GetKeyState(", "FakeKeyState(")
+        for real, fake in (("GetKeyState(", "FakeKeyState("), ("WinActive(", "FakeWinActive("),
+                           ("WinGetTitle(", "FakeWinGetTitle("), ("WinGetID(", "FakeWinGetID("),
+                           ("WinGetProcessName(", "FakeProcessName(")):
+            body = body.replace(real, fake)
         bodies.append(body)
     return "\n".join(bodies)
 
@@ -38,10 +41,12 @@ code = '#Requires AutoHotkey v2.0\n#SingleInstance Off\n#NoTrayIcon\n'
 code += '#Include ' + str(ROOT / "Bridge_Config.ahk") + '\n'
 code += r'''
 Trace := { enabled: false }
-T := { active: true, sent: [], physical: Map(), checks: 0 }
-St := { smHwnd: 1, held: Map(), sources: Map(), pendingReset: false,
+T := { active: true, sent: [], physical: Map(), checks: 0,
+       winActive: false, title: "", fgId: 0, fgExe: "" }
+St := { smHwnd: 1, held: Map(), sources: Map(), pendingReset: false, tabMismatch: false,
         wasActive: false, lastKeepalive: 0 }
-G := { held: Map(), lastActivity: A_TickCount }
+G := { held: Map(), lastActivity: A_TickCount, winCombo: false, winWatch: 0 }
+__AUTOSTART_LINK__
 
 try {
     rejected := false
@@ -131,6 +136,95 @@ try {
     T.physical["LCtrl"] := true
     GuestReset("panik", true)
     Check(T.sent[T.sent.Length] = "{Blind}{LCtrl up}", "explicit guest panic releases native modifier")
+
+    ; --- v5: keepalive timing -------------------------------------------------
+    T.sent := []
+    St.held.Clear(), St.sources.Clear(), St.pendingReset := false
+    St.lastKeepalive := 0   ; stale timestamp from an earlier hold
+    T.physical["LAlt"] := true
+    HoldDown(altEntry, "LAlt")
+    MaintainBridge()
+    Check(T.sent.Length = 1, "short hold sends no immediate keepalive")
+    T.physical["LAlt"] := false
+    MaintainBridge()
+    Check(!St.held.Count && T.sent[2] = "{Blind}{F13 up}", "short hold releases cleanly")
+
+    ; --- v5: tab title gate -----------------------------------------------------
+    Check(SMTitleMatches("VMware Horizon — Waterfox") && SMTitleMatches("Omnissa HORIZON — Waterfox"), "Horizon tab title matches")
+    Check(!SMTitleMatches("GitHub — Waterfox") && !SMTitleMatches(""), "other tab title rejected")
+    T.winActive := true, T.title := "VMware Horizon — Waterfox"
+    Check(RealIsSM(), "target window on Horizon tab is SM")
+    T.title := "Yeni Sekme — Waterfox"
+    Check(!RealIsSM(), "same window on another tab is not SM")
+    T.winActive := false, T.title := "VMware Horizon — Waterfox"
+    Check(!RealIsSM(), "inactive target is not SM")
+    savedTitle := SM_TITLE_MATCH
+    SM_TITLE_MATCH := ""
+    T.winActive := true, T.title := "anything"
+    Check(RealIsSM(), "empty SM_TITLE_MATCH disables tab gate")
+    SM_TITLE_MATCH := savedTitle
+    T.winActive := false
+
+    ; --- v5: marking and launch window filter ---------------------------------
+    T.fgId := 777, T.fgExe := "Code.exe"
+    MarkActiveAsSM()
+    Check(St.smHwnd = 1, "non-browser window cannot be marked")
+    T.fgExe := "Waterfox.EXE"
+    MarkActiveAsSM()
+    Check(St.smHwnd = 777 && St.pendingReset, "browser window can be marked")
+    St.smHwnd := 1, St.pendingReset := false
+    Check(IsAllowedSMExe("firefox.exe") && !IsAllowedSMExe("claude.exe"), "allowed browser list")
+    Check(SMWindowCriteria() = "ahk_class MozillaWindowClass ahk_exe waterfox.exe", "launch watches only top-level Waterfox windows")
+
+    ; --- v5: single Win opens Start in SM ----------------------------------------
+    T.sent := []
+    G.held.Clear()
+    GuestHoldDown(winEntry)
+    GuestHoldUp(winEntry)
+    Check(T.sent.Length = 3 && T.sent[1] = "{Blind}{LWin down}" && T.sent[2] = "{Blind}{LWin up}"
+        && T.sent[3] = "{Blind}{LWin}", "single Win adds clean tap for Start")
+    T.sent := []
+    GuestHoldDown(winEntry)
+    WinComboKey(0, 0x44, 0x20)
+    GuestHoldUp(winEntry)
+    Check(T.sent.Length = 2, "Win+D gets no extra tap")
+    T.sent := []
+    GuestHoldDown(winEntry)
+    GuestHoldDown(tabEntry)
+    GuestHoldUp(tabEntry)
+    GuestHoldUp(winEntry)
+    Check(T.sent.Length = 4 && T.sent[4] = "{Blind}{LWin up}", "Win with bridged key gets no extra tap")
+    T.sent := []
+    WinComboKey(0, 0x44, 0x20)
+    GuestHoldDown(winEntry)
+    GuestHoldUp(winEntry)
+    Check(T.sent.Length = 3, "combo state resets on each Win press")
+    GUEST_WIN_TAP_FIX := false
+    T.sent := []
+    GuestHoldDown(winEntry)
+    GuestHoldUp(winEntry)
+    Check(T.sent.Length = 2, "Win tap fix can be disabled")
+    GUEST_WIN_TAP_FIX := true
+    T.sent := []
+    GuestHoldDown(winEntry)
+    GuestReset("host RESET")
+    Check(T.sent.Length = 2 && T.sent[2] = "{Blind}{LWin up}", "reset releases Win without Start tap")
+    StartWinComboWatch()
+    Check(G.winWatch && G.winWatch.InProgress, "combo watcher runs as visible input hook")
+    G.winWatch.Stop()
+
+    ; --- v5: guest autostart shortcut ------------------------------------------
+    folder := A_Temp "\shortcut-bridge-autostart-" A_TickCount
+    DirCreate folder
+    try {
+        Check(SetGuestAutostart(true, folder) && FileExist(GuestAutostartPath(folder)), "autostart shortcut created")
+        FileGetShortcut GuestAutostartPath(folder), &target, &dir, &args
+        Check(target = GuestAutostartExe() && InStr(args, A_ScriptFullPath) && dir = A_ScriptDir, "autostart runs this receiver")
+        Check(FileExist(GuestAutostartExe()), "autostart interpreter exists")
+        Check(!SetGuestAutostart(false, folder) && !FileExist(GuestAutostartPath(folder)), "autostart shortcut removed")
+    } finally
+        DirDelete folder, true
+
     FileAppend "PASS " T.checks " behavioral assertions" Chr(10), "*"
     ExitApp 0
 } catch as err {
@@ -157,6 +251,20 @@ TraceWrite(*) {
 TraceModifiers(*) {
     return ""
 }
+FakeWinActive(*) {
+    return T.winActive
+}
+FakeWinGetTitle(*) {
+    return T.title
+}
+FakeWinGetID(*) {
+    return T.fgId
+}
+FakeProcessName(*) {
+    return T.fgExe
+}
+Notify(*) {
+}
 Log(*) {
 }
 UpdateTray(*) {
@@ -170,9 +278,14 @@ UpdateGuestTray(*) {
 '''
 code += handlers("Host_PC_Bridge.ahk", [
     "HoldDown", "HoldUp", "TapSend", "SendReset", "FlushPendingReset",
-    "BridgeReady", "MaintainBridge", "SourceReleaseReady"])
+    "BridgeReady", "MaintainBridge", "SourceReleaseReady", "MarkActiveAsSM", "SMWindowCriteria"])
+code += "\n" + handlers("Host_PC_Bridge.ahk", ["IsSM"]).replace("IsSM()", "RealIsSM()", 1)
 code += "\n" + handlers("Guest_SM_Receiver.ahk", [
-    "GuestHoldDown", "GuestHoldUp", "GuestTap", "GuestReset", "GuestKeepalive", "GuestWatchdog"])
+    "GuestHoldDown", "GuestHoldUp", "GuestTap", "GuestReset", "GuestKeepalive", "GuestWatchdog",
+    "StartWinComboWatch", "WinComboKey", "GuestAutostartPath", "GuestAutostartExe", "SetGuestAutostart"])
+autostart = re.search(r"^AUTOSTART_LINK := .*$", (ROOT / "Guest_SM_Receiver.ahk").read_text(encoding="utf-8"), re.M)
+assert autostart, "AUTOSTART_LINK"
+code = code.replace("__AUTOSTART_LINK__", autostart[0], 1)
 
 with tempfile.TemporaryDirectory(prefix="shortcut-bridge-tests-") as folder:
     harness = Path(folder) / "regression.ahk"

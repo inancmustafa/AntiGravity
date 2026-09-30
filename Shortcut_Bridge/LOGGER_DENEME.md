@@ -51,6 +51,7 @@ SM_Baslat.bat dosyasını çalıştır.
 |---|---|
 | HOST STATE target=0 | Köprü pencereye bağlanmamış |
 | HOST STATE matched=0 | Odak yanlış pencerede |
+| HOST STATE titleMatch=0 | Aktif sekmenin başlığı SM_TITLE_MATCH içermiyor |
 | RAW Tab var, HANDLER_DOWN Tab yok | Host hotkey/gate/hook veya duraklatma |
 | HOST down F14 var, GUEST RAW F14 yok | Tarayıcı/Horizon iletimi veya guest gözlem hook'u |
 | GUEST RAW F14 var, RX_DOWN F14 yok | Guest alıcı hotkey'i/başka AHK örneği |

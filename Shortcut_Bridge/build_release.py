@@ -3,7 +3,7 @@ from pathlib import Path
 import hashlib, os, re, subprocess, sys, zipfile
 
 ROOT = Path(__file__).resolve().parent
-NAME = "Shortcut_Bridge_v4_loggersiz"
+NAME = "Shortcut_Bridge_v5_loggersiz"
 PACKAGE = ROOT / "dist" / NAME
 
 def exact(text, old, new):
@@ -27,12 +27,11 @@ def runtime(name):
         text = pattern(text, r'^TraceStart\("HOST".*?(?=^; SM_Baslat\.bat)')
         text = exact(text, "else if !St.diagnostic\n", "else\n")
         text = pattern(text, r'^    if Trace\.enabled \{.*?^    }\n')
-        text = pattern(text, r'^    if \(St\.diagnostic &&.*?^    }\n')
         text = pattern(text, r'^Log\(msg\) \{.*?^}', 'Log(msg) {\n    ; No logging in this package.\n}')
     else:
         text = exact(text,
-            'G := { held: Map(), lastActivity: A_TickCount,\n       diagnostic: A_Args.Length >= 1 && A_Args[1] = "diag" }',
-            'G := { held: Map(), lastActivity: A_TickCount }')
+            'G := { held: Map(), lastActivity: A_TickCount, winCombo: false, winWatch: 0,\n       diagnostic: A_Args.Length >= 1 && A_Args[1] = "diag" }',
+            'G := { held: Map(), lastActivity: A_TickCount, winCombo: false, winWatch: 0 }')
         text = pattern(text, r'^TraceStart\("GUEST"[^\n]*\n')
         text = pattern(text, r'^GuestLog\(msg\) \{.*?^}', 'GuestLog(msg) {\n    ; No logging in this package.\n}')
     assert not re.search(r"\bTrace\w*|\bdiagnostic\b|Bridge_Logger", text), name
@@ -60,7 +59,7 @@ output = ROOT / "releases" / (NAME + ".zip")
 output.parent.mkdir(exist_ok=True)
 with zipfile.ZipFile(output, "w", zipfile.ZIP_DEFLATED) as archive:
     for name, data in sorted(files.items()):
-        info = zipfile.ZipInfo(NAME + "/" + name, date_time=(2026, 9, 12, 0, 0, 0))
+        info = zipfile.ZipInfo(NAME + "/" + name, date_time=(2026, 9, 30, 0, 0, 0))
         info.compress_type = zipfile.ZIP_DEFLATED
         archive.writestr(info, data)
 with zipfile.ZipFile(output) as archive:

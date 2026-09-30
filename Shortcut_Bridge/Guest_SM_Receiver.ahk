@@ -18,6 +18,16 @@
 ; SM'de Windows'un kendi pencere değiştirici overlay'i açılır, Tab'a art arda
 ; basılabilir, Alt bırakılınca seçim onaylanır.
 ;
+; TEK WIN: Win'e tek basışta host F16 down/up gönderir. Bırakma anında F16-up
+; olayı Win down ile Win up arasına girdiği için Windows bunu "tek Win" saymaz ve
+; Başlat menüsü açılmaz (host üzerinde ölçüldü). Win basılıyken başka bir tuş
+; gelmediyse alıcı, bıraktıktan sonra temiz bir Win vuruşu ekler
+; (GUEST_WIN_TAP_FIX). Win+D gibi kombinasyonlarda ek vuruş yapılmaz.
+;
+; OTURUM AÇILIŞINDA BAŞLATMA: tray > "Oturum açılışında başlat". Başlangıç
+; klasörüne kısayol koyar; AutoHotkey'in UI Access sürümü kuruluysa onu kullanır,
+; böylece yönetici olarak açılmış pencerelerde de çalışır.
+;
 ; TAKILMAYA KARŞI ÜÇ KATMAN:
 ;   1. Host'un gönderdiği RESET köprü tuşu (odak kaybı / suspend / çıkış).
 ;   2. Buradaki zaman aşımı watchdog'u (HOLD_TIMEOUT_MS).
@@ -34,10 +44,14 @@ SetKeyDelay -1, -1
 ;   held         : basılı köprü tuşu -> A_TickCount
 ;   lastActivity : son köprü olayının zamanı (watchdog bunu kullanır)
 ; ------------------------------------------------------------------------------
-G := { held: Map(), lastActivity: A_TickCount,
+G := { held: Map(), lastActivity: A_TickCount, winCombo: false, winWatch: 0,
        diagnostic: A_Args.Length >= 1 && A_Args[1] = "diag" }
 
+AUTOSTART_MENU := "Oturum açılışında başlat"
+AUTOSTART_LINK := "Shortcut Bridge SM Alici.lnk"
+
 RegisterReceivers()
+StartWinComboWatch()
 BuildGuestTray()
 UpdateGuestTray()
 SetTimer GuestWatchdog, 1000
@@ -96,6 +110,13 @@ GuestHoldDown(e, *) {
     if G.held.Has(e.bridge)
         return
 
+    ; Tek Win takibi: Win tutuşu yeni başlıyor ya da Win basılıyken başka bir
+    ; köprü tuşu geldi (ör. Win+Alt).
+    if (e.bridge = WIN_BRIDGE)
+        G.winCombo := false
+    else if G.held.Has(WIN_BRIDGE)
+        G.winCombo := true
+
     G.held[e.bridge] := A_TickCount
     Send "{Blind}{" e.guest " down}"
     GuestLog("TX_DOWN " e.bridge " -> " e.guest)
@@ -117,12 +138,19 @@ GuestHoldUp(e, *) {
     G.held.Delete(e.bridge)
     Send "{Blind}{" e.guest " up}"
     GuestLog("TX_UP " e.bridge " -> " e.guest)
+    if (e.bridge = WIN_BRIDGE && GUEST_WIN_TAP_FIX && !G.winCombo) {
+        ; Yukarıdaki bırakma Başlat'ı açmaz (F16-up araya girdi); temiz vuruş aç.
+        Send "{Blind}{" e.guest "}"
+        GuestLog("TX_TAP " e.guest " (tek Win)")
+    }
     UpdateGuestTray()
 }
 
 GuestTap(e, *) {
     Critical
     G.lastActivity := A_TickCount
+    if G.held.Has(WIN_BRIDGE)
+        G.winCombo := true
     ; Modifier zaten doğal olarak iletildiği için yalnızca temel tuşu basıyoruz.
     Send "{Blind}{" e.guest "}"
     GuestLog("tap " e.bridge " -> " e.guest)
@@ -160,6 +188,30 @@ GuestReset(reason := "", allModifiers := false) {
         GuestNotify("Köprü sıfırlandı — " reason)
 }
 
+; ------------------------------------------------------------------------------
+; Win basılıyken doğal kanaldan (Horizon) gelen herhangi bir tuş Win'i kombinasyon
+; yapar (Win+D, Win+Shift+S...). Görünür (V) hook tuşları engellemez; I seçeneği
+; bu scriptin kendi gönderimlerini yok sayar. Köprü tuşları GuestHoldDown'da
+; ayrıca işlenir.
+; ------------------------------------------------------------------------------
+StartWinComboWatch() {
+    if (!GUEST_WIN_TAP_FIX || WIN_BRIDGE = "")
+        return
+    ih := InputHook("V I L0")
+    ih.KeyOpt("{All}", "N")
+    for e in BRIDGE_TABLE
+        ih.KeyOpt("{" e.bridge "}", "-N")
+    ih.KeyOpt("{" BRIDGE_RESET "}{" BRIDGE_KEEPALIVE "}{LWin}{RWin}", "-N")
+    ih.OnKeyDown := WinComboKey
+    ih.Start()
+    G.winWatch := ih
+}
+
+WinComboKey(ih, vk, sc) {
+    if G.held.Has(WIN_BRIDGE)
+        G.winCombo := true
+}
+
 GuestWatchdog() {
     Critical
     if (G.held.Count && (A_TickCount - G.lastActivity > HOLD_TIMEOUT_MS))
@@ -178,6 +230,10 @@ BuildGuestTray() {
     tray.Delete()
     tray.Add "Modifier'ları Bırak`t(Ctrl+Alt+Shift+R)", (*) => GuestReset("tray", true)
     tray.Add
+    tray.Add AUTOSTART_MENU, ToggleGuestAutostart
+    if FileExist(GuestAutostartPath())
+        tray.Check AUTOSTART_MENU
+    tray.Add
     tray.Add "Logger ile yeniden baslat", (*) => Run(Format('"{1}" "{2}" diag', A_AhkPath, A_ScriptFullPath))
     tray.Add "Log klasorunu ac", TraceOpenFolder
     tray.Add "Yeniden Yükle", (*) => Reload()
@@ -193,6 +249,41 @@ UpdateGuestTray() {
     if (heldList != "")
         tip .= "`nBasılı: " heldList
     A_IconTip := tip
+}
+
+; ------------------------------------------------------------------------------
+; OTURUM AÇILIŞINDA BAŞLATMA
+; ------------------------------------------------------------------------------
+GuestAutostartPath(folder := A_Startup) {
+    return folder "\" AUTOSTART_LINK
+}
+
+; UI Access sürümü (AutoHotkey kurulumunda seçildiyse) yönetici pencerelerinde de
+; hotkey/Send çalıştırır; scripti yönetici yapmadan. Yoksa mevcut yorumlayıcı.
+GuestAutostartExe() {
+    uia := RegExReplace(A_AhkPath, "i)(?<!_UIA)\.exe$", "_UIA.exe")
+    return FileExist(uia) ? uia : A_AhkPath
+}
+
+SetGuestAutostart(enable, folder := A_Startup) {
+    link := GuestAutostartPath(folder)
+    if !enable {
+        if FileExist(link)
+            FileDelete link
+        return false
+    }
+    FileCreateShortcut GuestAutostartExe(), link, A_ScriptDir
+        , '"' A_ScriptFullPath '"', "Shortcut Bridge SM alicisi"
+    return true
+}
+
+ToggleGuestAutostart(*) {
+    enabled := SetGuestAutostart(!FileExist(GuestAutostartPath()))
+    if enabled
+        A_TrayMenu.Check AUTOSTART_MENU
+    else
+        A_TrayMenu.Uncheck AUTOSTART_MENU
+    GuestNotify(enabled ? "Oturum açılışında başlayacak" : "Otomatik başlatma kapatıldı")
 }
 
 GuestNotify(msg, ms := 2000) {
