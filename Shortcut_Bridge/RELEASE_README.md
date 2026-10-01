@@ -27,6 +27,8 @@ kaynakla aynıdır ve paket üretilirken regresyon testlerinden geçer.
 - SM sekmesinde **Waterfox'un hiçbir kısayolu çalışmaz**; Ctrl+T, Ctrl+Alt+T,
   Ctrl+Alt+C, Ctrl+W, F5, F11, Win+D ve benzerleri SM'e gider.
 - **Ctrl+F11** Waterfox tam ekranını açıp kapatır (F11 SM'e gider).
+- SM'deki kendi AHK scriptlerinin kısayolları (ör. `^3::`) taşınan tuşlarla da
+  çalışır; alıcı tuşları gerçek klavye gibi (SendLevel 1) basar.
 - **Ctrl+C / Ctrl+V / Ctrl+X** doğal yoldan geçer; Horizon kopyala-yapıştırı
   bunlarla eşitler.
 - **Ctrl+Alt+Shift+H** SM'den ana PC'ye geçer (SM penceresi simge durumuna

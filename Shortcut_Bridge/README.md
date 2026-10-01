@@ -142,6 +142,11 @@ Ctrl+C/V/X Waterfox kısayolu değildir; Horizon yerel pano ile SM panosunu bu
 tuşlarla eşitler. Taşınırsa kopyala-yapıştır bozulabilir. Yine de taşımak
 istersen `CARRY_NATURAL` listesini boşalt.
 
+SM'deki kendi AHK scriptlerin (ör. `^3::`) taşınan kısayollarla da çalışır:
+alıcı tuşları SendLevel 1 ile basar. AHK'nın klavye kancalı hotkey'leri başka
+bir scriptin SendLevel 0 ile bastığı tuşları yok saydığı için v6'nın ilk
+hâlinde `^3::` tetiklenmiyordu.
+
 Win+D daha önce SM'e ulaşmıyordu: Win köprüden, D ise Horizon'dan ayrı ayrı
 geliyordu. Artık Win basılıyken basılan tuş da alıcı tarafından SM içinde
 üretiliyor.
@@ -271,6 +276,7 @@ bağlamak, pencere eşleşmesini modifier kısayollarından bağımsız sınar.
   Waterfox'ta yeni sekme açılmamalı, sekme kapanmamalı, sayfa yenilenmemeli.
 - SM'de F11 SM'deki uygulamaya gitmeli; Ctrl+F11 Waterfox tam ekranını açıp kapatmalı.
 - Ctrl+C / Ctrl+V ile yerel PC ile SM arasında kopyala-yapıştır çalışmalı.
+- SM'deki kendi AHK kısayolların (ör. `^3::`) çalışmalı.
 - Ctrl+Alt+Shift+S SM'deyken de köprüyü duraklatmalı.
 - Bağlı oturumda host tray ipucu "aktif" göstermeli (sekme başlığı eşleşiyor).
 - Aynı Waterfox penceresinde başka sekmeye geç: Alt+Tab host'ta çalışmalı;
@@ -302,6 +308,8 @@ Eski `.7z` arşivleri, v4 paketi ve eski teşhis logu `_arsiv/` klasöründedir
   de fiziksel Ctrl+Alt+Shift ile çalışıyor.
 - Ctrl+Alt+Shift+H: SM ile ana PC arasında tek tuşla geçiş.
 - Teşhis logu taşıma hanelerini yalnızca "CARRY" olarak kaydediyor.
+- Alıcı tuşları SendLevel 1 ile basıyor: SM'deki diğer AHK scriptlerinin
+  hotkey'leri (ör. `^3::`) taşınan kısayollarla da tetikleniyor.
 - Test betiği uyarıları konsola yazdırıyor; tek başına doğrulanan logger
   artık ekranda bir uyarı penceresi açıp beklemiyor.
 

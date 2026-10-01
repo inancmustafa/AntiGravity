@@ -37,6 +37,14 @@
 SendMode "Input"          ; yerel OS'e enjeksiyon — en güvenilir ve atomik
 SetKeyDelay -1, -1
 
+; SM'DEKİ DİĞER AHK SCRIPTLERİ: AHK'nın klavye kancalı hotkey'leri (ör. ^3::)
+; başka bir AHK scriptinin SendLevel 0 ile bastığı tuşları yok sayar. Taşınan
+; Ctrl+3'teki "3"ü bu alıcı bastığı için ^3:: tetiklenmiyordu. SendLevel 1,
+; varsayılan #InputLevel 0'ı aşar: köprünün bastığı tuşlar SM'deki scriptlere
+; gerçek klavye gibi görünür. Alıcının kendi hotkey'leri #InputLevel 1'dedir;
+; böylece kendi bastığı tuşlarla kendini tetiklemez.
+SendLevel 1
+
 ; ------------------------------------------------------------------------------
 ; DURUM
 ; ------------------------------------------------------------------------------
@@ -65,6 +73,7 @@ return
 ; ==============================================================================
 ; YEREL PANİK TUŞU (VM içinden)
 ; ==============================================================================
+#InputLevel 1
 #SuspendExempt
 ^!+r::GuestReset("panik tuşu", true)
 #SuspendExempt False
@@ -75,21 +84,21 @@ return
 RegisterReceivers() {
     for e in BRIDGE_TABLE {
         if (e.mode = "hold") {
-            Hotkey "*" e.bridge,       GuestHoldDown.Bind(e)
-            Hotkey "*" e.bridge " up", GuestHoldUp.Bind(e)
+            Hotkey "*" e.bridge,       GuestHoldDown.Bind(e), "I1"
+            Hotkey "*" e.bridge " up", GuestHoldUp.Bind(e), "I1"
         } else {
-            Hotkey "*" e.bridge,       GuestTap.Bind(e)
+            Hotkey "*" e.bridge,       GuestTap.Bind(e), "I1"
         }
     }
-    Hotkey "*" BRIDGE_RESET, (*) => GuestReset("host RESET")
-    Hotkey "*" BRIDGE_KEEPALIVE, GuestKeepalive
-    Hotkey "*" BRIDGE_KEEPALIVE " up", (*) => 0
+    Hotkey "*" BRIDGE_RESET, ((*) => GuestReset("host RESET")), "I1"
+    Hotkey "*" BRIDGE_KEEPALIVE, GuestKeepalive, "I1"
+    Hotkey "*" BRIDGE_KEEPALIVE " up", ((*) => 0), "I1"
     ; Waterfox kısayollarının taşınması (Bridge_Config > TAŞIMA)
-    Hotkey "*" CARRY_START, GuestCarryStart
-    Hotkey "*" CARRY_START " up", (*) => 0
+    Hotkey "*" CARRY_START, GuestCarryStart, "I1"
+    Hotkey "*" CARRY_START " up", ((*) => 0), "I1"
     for i, carrier in CARRY_DIGITS {
-        Hotkey "*" carrier, GuestCarryDigit.Bind(i - 1)
-        Hotkey "*" carrier " up", (*) => 0
+        Hotkey "*" carrier, GuestCarryDigit.Bind(i - 1), "I1"
+        Hotkey "*" carrier " up", ((*) => 0), "I1"
     }
 }
 
@@ -240,7 +249,7 @@ GuestReset(reason := "", allModifiers := false) {
 StartWinComboWatch() {
     if (!GUEST_WIN_TAP_FIX || WIN_BRIDGE = "")
         return
-    ih := InputHook("V I L0")
+    ih := InputHook("V I2 L0")    ; I2: bu alıcının SendLevel 1 gönderimlerini de yok say
     ih.KeyOpt("{All}", "N")
     for e in BRIDGE_TABLE
         ih.KeyOpt("{" e.bridge "}", "-N")

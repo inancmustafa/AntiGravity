@@ -445,8 +445,21 @@ with tempfile.TemporaryDirectory(prefix="shortcut-bridge-tests-") as folder:
 
 # Register the real dynamic hotkey variants while every target gate is false.
 # No real bridge instance is started or replaced; callbacks still use fake IO.
-registration = code.replace('try {\n', 'try {\n    T.active := false\n    RegisterBridges()\n    FileAppend "PASS dynamic hotkey registration" Chr(10), "*"\n    ExitApp 0\n', 1)
+registration = code.replace('try {\n', 'try {\n    T.active := false\n    RegisterBridges()\n    RegisterReceivers()\n    FileAppend "PASS dynamic hotkey registration (host and receiver)" Chr(10), "*"\n    ExitApp 0\n', 1)
 registration += "\n" + handlers("Host_PC_Bridge.ahk", ["RegisterBridges"])
+registration += "\n" + handlers("Guest_SM_Receiver.ahk", ["RegisterReceivers"])
+
+# Other AHK scripts in the VM (e.g. a ^3:: hotkey) must see the receiver's keys
+# like a real keyboard: SendLevel above their default #InputLevel 0, while the
+# receiver's own hotkeys sit at input level 1 so its own sends never trigger them.
+guest_source = (ROOT / "Guest_SM_Receiver.ahk").read_text(encoding="utf-8")
+assert re.search(r"^SendLevel 1$", guest_source, re.M), "receiver must send at SendLevel 1"
+assert guest_source.index("#InputLevel 1") < guest_source.index("^!+r::"), "panic hotkey input level"
+receiver = re.search(r"^RegisterReceivers\(\) \{.*?^\}", guest_source, re.M | re.S)[0]
+hotkey_lines = [l for l in receiver.splitlines() if l.strip().startswith('Hotkey "*"')]
+assert hotkey_lines and all(l.rstrip().endswith('"I1"') for l in hotkey_lines), "receiver hotkeys need input level 1"
+assert 'InputHook("V I2 L0")' in guest_source, "combo watcher must ignore the receiver's own SendLevel 1 output"
+print("PASS receiver input levels: SendLevel 1, own hotkeys at #InputLevel 1")
 with tempfile.TemporaryDirectory(prefix="shortcut-bridge-registration-") as folder:
     harness = Path(folder) / "registration.ahk"
     harness.write_text(registration, encoding="utf-8")
